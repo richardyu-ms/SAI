@@ -31,5 +31,11 @@ saithrift-build:
 saithrift-install: saithrift-build
 	make -C test/saithrift install
 
+saithriftv2-build:
+	make -C test/saithriftv2
+
+saithriftv2-install: saithriftv2-build
+	make -C test/saithriftv2 install
+
 clean:
 	make -C test clean    

@@ -1,0 +1,2 @@
+debian/usr/include/saiserverv2/switch_sai_rpc_server_v2.h usr/include
+debian/usr/lib/saiserverv2/librpcserver_v2.a usr/lib

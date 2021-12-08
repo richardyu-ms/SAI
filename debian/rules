@@ -24,9 +24,11 @@ include /usr/share/dpkg/default.mk
 
 override_dh_auto_build:
 	$(MAKE) DESTDIR=$(CURDIR)/debian saithrift-build 
+	$(MAKE) DESTDIR=$(CURDIR)/debian saithriftv2-build
 
 override_dh_auto_install:
 	$(MAKE) DESTDIR=$(CURDIR)/debian saithrift-install
+	$(MAKE) DESTDIR=$(CURDIR)/debian saithriftv2-install
 
 override_dh_auto_test:
 

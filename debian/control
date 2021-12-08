@@ -25,3 +25,24 @@ Package: python-saithrift
 Architecture: any
 Depends: ${shlibs:Depends}
 Description: This package contains python SAI rpc library.
+
+Package: saiserverv2
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Pre-Depends}
+Description: This package contains SAI thrift server v2
+
+Package: saiserverv2-dbg
+Architecture: any
+Depends: saiserverv2 (= ${binary:Version}), ${misc:Depends}
+Section: debug
+Description: debugging symbols for SAI thrift server v2
+
+Package: libsaithriftv2-dev
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: This package contains SAI rpc library development headers 
+
+Package: python3-saithriftv2
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: This package contains python3 SAI rpc library.
