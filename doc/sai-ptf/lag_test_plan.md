@@ -139,7 +139,7 @@ sai_thrift_get_lag_attribute(
 |Packet dropped on port4| Disable egress and ingress on lag member4. send packet | Packet drop.|
 |Packet flooding on VLAN members, port0 and port1.| Enable lag egress and ingress. Send packet with VLAN tag on lag port4 with a new dest mac.|Packet received.|
 
-## Test suite #3: Remove member 
+## Test suite #3: Remove Lag member 
 Sample APIs
 create packet
 ```python
