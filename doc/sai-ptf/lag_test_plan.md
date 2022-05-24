@@ -10,6 +10,7 @@
 - [Test suites](#test-suites)
   - [Test suite #1: PortChannel Loadbalanceing](#test-suite-1-portchannel-loadbalanceing)
   - [Test suite #2: Ingress/Egreee disable](#test-suite-2-ingressegreee-disable)
+  - [Test suite #3: Remove member](#test-suite-3-remove-member)
 ## Overriew
 The purpose of this test plan is to test the LAG/PortChannel function from SAI.
 
@@ -138,3 +139,33 @@ sai_thrift_get_lag_attribute(
 | Disable egress and ingress on lag member4. send packet | Packet dropped on port4| Packet drop.|
 | Enable lag egress and ingress. Send packet with VLAN tag on lag port4 with a new dest mac.|Packet flooding on VLAN members, port0 and port1.|Packet received.|
 
+## Test suite #3: Remove member 
+Sample APIs
+create packet
+```python
+simple_tcp_packet(eth_dst='00:11:11:11:11:11',
+                                    eth_src='00:22:22:22:22:22',
+                                    ip_dst=dst_ip_addr,
+                                    ip_src='192.168.8.1',
+                                    ip_id=109,
+                                    ip_ttl=64)
+```
+Remove Lag member
+```python
+     print("Remove LAG member 4")
+     status = sai_thrift_remove_lag_member(self.client, self.lag1_member4)
+
+```
+How to check if each port of Lag receive an equal number of packets (if we have n members in a Lag), 
+```python
+ self.max_itrs =100
+ for i in range(0, n):
+                self.assertTrue((count[i] >= ((self.max_itrs / n) * 0.7)),
+
+```
+| Steps/Cases | Goal | Expect  |
+|-|-|-|
+|1.Create lag1 and add port4,port5,port6 as member. | Create lag and member| lag, and member created|
+|2.Send packet on port1 to lag1 100 times. | Forwarding packet from port1 to any port of lag1.|  Each port of lag1 receive an equal number of packets.|
+|3. Remove port6 form Lag1 and do step2 again | Remove port6 and forwarding packet from port1to port4,5| Port4 and port5 will  receive an equal number of packets.|
+|4. Remove port5 from Lag1, do step3 again|
