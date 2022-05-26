@@ -11,6 +11,8 @@
   - [Test suite #1: PortChannel Loadbalanceing](#test-suite-1-portchannel-loadbalanceing)
   - [Test suite #2: Ingress/Egreee disable](#test-suite-2-ingressegreee-disable)
   - [Test suite #3: Remove Lag member](#test-suite-3-remove-lag-member)
+  - [ToDO Test suite #4: Scaling test cases](#todo-test-suite-4-scaling-test-cases)
+  - [ToDO Test suite #5: Hash LoadBalancing test cases](#todo-test-suite-5-hash-loadbalancing-test-cases)
 ## Overriew
 The purpose of this test plan is to test the LAG/PortChannel function from SAI.
 
@@ -87,10 +89,16 @@ The test will include two parts
 ## Packets
 ```Python
    pkt = simple_tcp_packet(
-                eth_dst=dmac,
+                eth_dst=dev_port11_MAC,
                 eth_src='00:22:22:22:22:22',
                 ip_dst='10.10.10.2',
-                ip_src=srcip)                  
+                ip_src=srcip) 
+                
+   exp_pkt = simple_tcp_packet(
+                eth_dst='00:99:99:99:99:99',
+                eth_src=dev_port11_MAC,
+                ip_dst='10.10.10.2',
+                ip_src=srcip)
 ```
 
 # Test suites
@@ -163,3 +171,7 @@ How to check if each port of Lag receive an equal number of packets (if we have 
 | Goal | Steps/Cases | Expect  |
 |-|-|-|
 |Remove port16 and forwarding packet from port1 to port14,15|Remove port16 form Lag3 and Send packet on dev_port11 to lag3 100 times| Port14 and port15 will receive an equal number of packets.|
+
+## ToDO Test suite #4: Scaling test cases
+
+## ToDO Test suite #5: Hash LoadBalancing test cases
