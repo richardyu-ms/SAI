@@ -4,16 +4,20 @@
     - [Test Topology](#test-topology)
     - [Testbed](#testbed)
   - [Scope](#scope)
-  - [Basic Test data and SAI APIs](#basic-test-data-and-sai-apis)
-    - [Create VLAN and VLAN member](#create-vlan-and-vlan-member)
-    - [Packet example](#packet-example)
-  - [Basic Configurations](#basic-configurations)
+  - [Basic Configurations and SAI APIs](#basic-configurations-and-sai-apis)
     - [Basic VLAN configuration](#basic-vlan-configuration)
+    - [Create VLAN and VLAN member](#create-vlan-and-vlan-member)
     - [Basic Forwarding Table](#basic-forwarding-table)
+    - [Create FDB Entry](#create-fdb-entry)
+    - [Packet example](#packet-example)
   - [Tests](#tests)
     - [Test Case: VLAN interface (RIF/SVI)](#test-case-vlan-interface-rifsvi)
+      - [Test the configuration](#test-the-configuration)
+      - [Test description](#test-description)
       - [Route entry](#route-entry)
-      - [VLAN interface to Port](#vlan-interface-to-port)
+      - [VLAN interface input packet](#vlan-interface-input-packet)
+      - [VLAN interface output packet](#vlan-interface-output-packet)
+      - [Test case](#test-case)
     - [Test suite: Tagging and trunk/access](#test-suite-tagging-and-trunkaccess)
     - [Test suite: Flooding and learning](#test-suite-flooding-and-learning)
       - [Trunk VLAN](#trunk-vlan)
@@ -22,8 +26,8 @@
     - [Test case: Test Frame Filtering](#test-case-test-frame-filtering)
     - [Test case: Test native vlan (Optional)](#test-case-test-native-vlan-optional)
   - [SAI APIs operations](#sai-apis-operations)
-    - [Test case: Test VLAN related counters.](#test-case-test-vlan-related-counters)
     - [Test case: Vlan member list.](#test-case-vlan-member-list)
+    - [Test case: Test VLAN related counters.](#test-case-test-vlan-related-counters)
   - [ToDO Test Case: Scaling test cases](#todo-test-case-scaling-test-cases)
 ## Overriew
 The purpose of this test plan is to test the VLAN function from SAI.
@@ -52,46 +56,84 @@ The test will include three parts
 3. Composit scenario
    - VLAN Interface (RIF/SVI)
 
-## Basic Test data and SAI APIs
+## Basic Configurations and SAI APIs
 During testing, we need to use SAI APIs for testing. By using the SAI-PTF structure, we can invoke the SAI with RPC APIs remotely, the sample code is below.
+
+
+### Basic VLAN configuration
+|VLAN ID|Ports|Tag mode|
+|-|-|-|
+|10|Port1-4|Tag|
+||Port5-8|Untag|
+|100|port9-12|Tag|
+||Port13-16|Untag|
+
 ### Create VLAN and VLAN member
 - Create Vlan 10
    ```Python
    sai_thrift_create_vlan(self.client, vlan_id=10)
    ```
-- Create Native vlan
+- Create Native vlan 10
    ```python
    sai_thrift_set_port_attribute(self.client, port_id, port_vlan_id=10)
    ```
 - Create Vlan member and VLAN member with different mode
    Untag mode and access port
    ```python
+    ------------------------
+    |VLAN ID|Ports|Tag mode|
+    |-------|-----|--------|
+    | 10    |Port1| Tag    |
+    | 10    |Port2| Untag  |
+    ------------------------
+
    sai_thrift_create_vlan_member(
                     self.client,
                     vlan_id=10,
-                    bridge_port_id=port_bridge_port,
+                    bridge_port_id=port_bridge_port1,
                     vlan_tagging_mode=SAI_VLAN_TAGGING_MODE_UNTAGGED)
-   ```
-   Tag mode and trunk port
-   ```python
+
    sai_thrift_create_vlan_member(
                     self.client,
                     vlan_id=10,
-                    bridge_port_id=port_bridge_port,
+                    bridge_port_id=port_bridge_port2,
                     vlan_tagging_mode=SAI_VLAN_TAGGING_MODE_TAGGED)
    ```
+
+### Basic Forwarding Table
+For testing, we can use basic FDB APIs to Add the FDB entry into CAM. The Rule as below
+|Name|MAC|PORT|VLAN|
+|-|-|-|-|
+|fdb1-4  |mac1-00:11:11:11:11:11 -  mac4-00:44:44:44:44:44|Port1-4|10|
+|fdb5-8  |mac5-00:55:55:55:55:55 -  mac8-00:88:88:88:88:88|Port5-8|10|
+|fdb9-12 |mac9-00:99:99:99:99:99 -  mac12-01:22:22:22:22:22|Port9-12|100|
+|fdb13-16|mac13-01:33:33:33:33:33 - mac16-01:66:66:66:66:66|Port13-16|100|
+|fdb17-32|mac17-01:77:77:77:77:77 - mac32-03:22:22:22:22:22|Port17-32||
+
+
+### Create FDB Entry
+
 - Add static FDB entry in the FDB table
    
-   In the code below, we can create FDB entry, and bind the SMAC with a port with a static dfb entry.
+  In the sample code below, we can see how to create FDB entry.
+
+  This FDB entry is a static entry, it will ``forward`` packet when the packet with a mac1 on port1.
    ```python
+    ------------------------------------------
+    | MAC   |Ports| VLAN     | Type | Action |
+    |-------|-----|----------|----------------
+    | mac1  |Port1| vlan_oid |StATIC| FORWARD|
+    ------------------------------------------
+
    sai_thrift_fdb_entry_t(switch_id=self.switch_id, mac_address=mac1, bv_id=self.vlan_oid)
    sai_thrift_create_fdb_entry(
                 self.client,
                 fdb_entry,
                 type=SAI_FDB_ENTRY_TYPE_STATIC,
-                bridge_port_id=port_bp,
+                bridge_port_id=Port1,
                 packet_action=SAI_PACKET_ACTION_FORWARD)
    ```
+
 - FDB operations
   Get FDB entries
   ```python
@@ -126,33 +168,19 @@ During testing, we need to use SAI APIs for testing. By using the SAI-PTF struct
                       ip_dst='172.16.0.1',
                       ip_ttl=64)
   ```
-## Basic Configurations
-### Basic VLAN configuration
-|VLAN ID|Ports|Tag mode|
-|-|-|-|
-|10|Port1-4|Tag|
-||Port5-8|Untag|
-|100|port9-12|Tag|
-||Port13-16|Untag|
-
-### Basic Forwarding Table
-For testing, we can use basic FDB APIs to Add the FDB entry into CAM. The Rule as below
-|Name|MAC|PORT|VLAN|
-|-|-|-|-|
-|fdb1-4  |mac1-00:11:11:11:11:11 -  mac4-00:44:44:44:44:44|Port1-4|10|
-|fdb5-8  |mac5-00:55:55:55:55:55 -  mac8-00:88:88:88:88:88|Port5-8|10|
-|fdb9-12 |mac9-00:99:99:99:99:99 -  mac12-01:22:22:22:22:22|Port9-12|100|
-|fdb13-16|mac13-01:33:33:33:33:33 - mac16-01:66:66:66:66:66|Port13-16|100|
-|fdb17-32|mac17-01:77:77:77:77:77 - mac32-03:22:22:22:22:22|Port17-32||
-
+  
 ## Tests
-
-
 
 ### Test Case: VLAN interface (RIF/SVI) 
 **Testing Objective**
 
-Test the configuration as below
+When a switch needs to forward in layer3, it needs a VLAN interface in layer3(SVI) for packet routing.
+
+In this test case, we will test VLAN interface and VLAN function.
+
+#### Test the configuration 
+For VLAN interface in layer3(SVI), it can be configured from a config_db.json. This json file, can be generated from a xml config as below. Base on this configuration we can see what the actual configuration will be.
+
 
 ```xml
  <DeviceL3Info Hostname="AMS08-0101-0522-08T0">
@@ -191,17 +219,18 @@ Convert to config_db.json
         },
     }
 ```
-
-**Testing Description**
-
-When a switch needs to forward in layer3, it needs a VLAN interface in layer3(SVI) for packet routing or Trunk connection to other devices/servers.
+#### Test description
 ```
 Test example:
 Vlan to Port:
   pkt(Untag) -> |DUT|Port3(VLAN10:Trunk) -> RIF(VLAN_IF->MAC:IP1) ||| vlan100 || -> Port(Access) -> ...
 ```
 
-Need the APIs as below
+#### Route entry
+
+|DestIp|Next Hop |Next Hop ip|Next Hop Mac|
+|-|-|-|-|
+|10.10.0.1|vlanInterface(VLAN100)|10.10.10.10(SVI_IP)|PORTMAC|
 
 - Create Router for a VLAN interface (not used in currernt test, just for explain the route creation.)
   ```Python
@@ -231,13 +260,7 @@ Need the APIs as below
             self.client, self.route_entry1, next_hop_id=self.nhop1)
   ```
 
-#### Route entry
-|DestIp|Next Hop |Next Hop ip|Next Hop Mac|
-|-|-|-|-|
-|10.10.0.1|vlanInterface(VLAN100)|10.10.10.10(SVI_IP)|PORTMAC|
-
-#### VLAN interface to Port 
-VLAN interface input packet
+#### VLAN interface input packet
   ```Python
   simple_tcp_packet(
             eth_dst=SVI_MAC, #Forwarding in vlan
@@ -246,7 +269,7 @@ VLAN interface input packet
             ip_src=SRC_IP)
   ```
 
-VLAN interface output packet
+#### VLAN interface output packet
   ```Python
   simple_tcp_packet(
             eth_dst=PORT_MAC, 
@@ -259,9 +282,9 @@ VLAN interface output packet
 - Create VLAN as the basic configuration.
 - Create an FDB table as a basic configuration.
 - Create VLAN Interface for ``VLAN100`` with ``SVI_IP``
-- Create route DESTIP:IP1 to ``PORT15``
+- Create route ``DEST_IP`` and next hop with ``SVI_IP`` and ``PORTAMC`` to ``PORT15``.
 
-Below is the test for checking this.
+#### Test case
 |  Goal |Steps/Cases | Expect  |
 |-|-|-|
 | Forwarding packet on ``VLAN_INTERFACE`` .| Send ``Untagged`` packet with dest ``SVI_MAC`` on port1. |  ``Untagged`` packet received on ``PORT15``.|
@@ -269,9 +292,9 @@ Below is the test for checking this.
 
 ### Test suite: Tagging and trunk/access
 
-This is a basic set of testing. This test suite will cover the basic VLAN function around tag/untag and trunk/access port.
+This is a basic funcation testing. This test suite will cover the basic VLAN function around tag/untag and trunk/access port.
 
-*p.s. Do not take native VLAN in this scenario (it will be in other tests). Please make sure the native VLAN will not impact the result.*
+*p.s. This test will not check function with native VLAN scenario (it will be in other tests). Please make sure the native VLAN will not impact the result.*
 
 **Testing Objective**
 
@@ -290,15 +313,15 @@ With a Tagged packet or untagged packet, on the trunk and access port, when ingr
 **Testing Description**
 ```
 Test example:
-                                    DMAC-> |(Trunk:10)->pkt(Tag:10)
-1. pkt(tagged：10) ->(trunk:10)|DUT|
-                                    DMAC-> |(Acess:10)->pkt(Untag)
+                                     DMAC-> |(Trunk:10)->pkt(Tag:10)
+1. pkt(tagged：10) ->  (trunk:10)|DUT|
+                                     DMAC-> |(Acess:10)->pkt(Untag)
 
-                                    DMAC-> |(Trunk:10)->pkt(Tag:10)
+                                     DMAC-> |(Trunk:10)->pkt(Tag:10)
 2. pkt(tagged:10)  -> (access:10)|DUT|
-                                    DMAC-> |(Acess:10)->pkt(Untag)                              
+                                     DMAC-> |(Acess:10)->pkt(Untag)                              
 
-3. pkt(Tagged:20)  -> (Trunk:10)|DUT| -> X
+3. pkt(Tagged:20)  ->  (Trunk:10)|DUT|   -> DROP
 ```
 
 Below is the test for checking this.
@@ -346,9 +369,10 @@ With MAC in CAM
 Cases:
 | Goal |Cases |  Expect  |
 |-|-|-|
-| Flooding to VLAN members. | Send ``VLAN10`` ``tagged`` packet with dest ``mac4`` on ``port1~3``. |``Tagged`` Packets from ``Trunk``, ``Untag`` Packet from ``Access``| 
-|Unicast on VLAN port after learning.| Send ``VLAN10`` ``tagged`` packet with dest ``mac1~3`` on ``port4``.|  Received ``VLAN10`` ``tagged`` packet on mac matched port.|
-|No flooding on VLAN port after learning.| Send ``VLAN10`` ``tagged`` packet with dest ``mac1~3`` on ``port4``.| No other packet than mac matched port.|
+| Flooding to VLAN members. | Every time, send ``VLAN10`` ``tagged`` one packet with dest ``mac4`` for each port in ``port1~3`` with port's mac. |``Tagged`` Packets from ``Trunk``, ``Untag`` Packet from ``Access``| 
+|Unicast on VLAN port after learning.| Every time, send ``VLAN10`` ``tagged`` one packet for each dest in ``mac1~3`` on ``port4``.|  Received ``VLAN10`` ``tagged`` packet on mac matched port.|
+|No flooding on VLAN port after learning.| Send ``VLAN10`` ``tagged`` packet with dest ``mac4`` on ``port1``.| Only one packet received on ``port4``.|
+|||No other packets on ``Port1~3``.|
 |MAC learning.| Use FDB SAI API to check FDB entries.| ``4`` entries should be added, and marked with VLAN id.|
 
 #### Access VLAN 
@@ -371,9 +395,10 @@ Precondition/Setup:
 
 | Goal | Steps |  Expect  |
 |-|-|-|
-| Flooding to VLAN members. | Send ``Tagged`` packet with dest ``mac5`` on ``port6~8``. |``Tagged`` Packets from ``Trunk``, ``Untagged`` Packet from ``Access``| 
-|Unicast on VLAN port after learning.| Send ``Tagged`` packet with dest ``mac6~8`` on ``port5``.| Received ``Untagged`` packet on mac matched port.|
-|No flooding on VLAN port after learning.| Send ``Tagged`` packet with dest ``mac6~8`` on ``port5``.| No other packet than mac matched port.|
+| Flooding to VLAN members. | Every time, send ``Tagged`` one packet with dest ``mac5`` for each port in ``port6~8``. |``Tagged`` Packets from ``Trunk``, ``Untagged`` Packet from ``Access``| 
+|Unicast on VLAN port after learning.| Every time, send ``Tagged`` packet for each dest ``mac6~8`` on ``port5``.| Received ``Untagged`` packet on mac matched port.|
+|No flooding on VLAN port after learning.| Send ``Tagged`` packet with dest ``mac5`` on ``port6``.| Only one packet received on ``port5``.|
+|||No other packets on ``Port1~3``.|
 |MAC learning.| Use FDB SAI API to check FDB entries.| | 4 entries should be added, and marked with VLAN id.|
 
 ### Composit scenario: ARP Flooding and learn
@@ -390,6 +415,8 @@ Precondition/Setup:
   ```
 - ARP response
   ```Python
+  Untagged:
+
   simple_arp_packet(
             eth_dst='00:11:11:11:11:11', 
             eth_src='00:22:22:22:22:22',
@@ -398,10 +425,22 @@ Precondition/Setup:
             ip_snd='10.10.10.2',
             hw_snd='00:22:22:22:22:22',
             hw_tgt="00:11:11:11:11:11")
+  Tagged:
+
+  simple_arp_packet(
+            eth_dst='00:11:11:11:11:11', 
+            eth_src='00:22:22:22:22:22',
+            arp_op=2,  # ARP response
+            ip_tgt='10.10.10.1',
+            ip_snd='10.10.10.2',
+            vlan_vid=10,
+            hw_snd='00:22:22:22:22:22',
+            hw_tgt="00:11:11:11:11:11")
   ```
+
 In the ARP scenario, the mac learning process is:
 1. Send an ARP request, with the source MAC, dest IP, and src IP, for broadcast, the DST MAC is ff:ff:ff:ff:ff:ff
-2. After the encountered device get the ARP packet and sends out a response, the packet will be filled with a source mac, this is the mac we want from step 1.
+2. After the encountered device get the ARP packet and sends out a response, the packet will be filled with a source mac, this is the target device mac for the dest IP.
 3. Switch received that response, cause the switch learned a MAC on step 1 on the sending port, then it can make a unicast here.
 
 **p.s. The test will be ended here, will not test the send from the port in step 1 again, it is already covered in other tests.**
@@ -415,7 +454,7 @@ Test example:
                                                                 | pkt(Untag):VLAN10:Access
   ARP Req pkt(Untag:DMAC) ->  (access:10)|DUT| -> Flooding -> VLAN:10 
                                                                 | pkt(Tag):VLAN10:Trunk
-2. ARP REsponse 
+2. ARP Response 
   pkt(access:10)|DUT| <- Forward(FDB:MAC=DMAC) <- VLAN:10:PORT <- RP Resp pkt(tagged:10:DMAC)
 
 ```
@@ -432,11 +471,12 @@ Precondition/Setup:
 ### Test case: Test Frame Filtering
 **Testing Objective**
 
-The switch will not forward packet source MAC equals to the port's mac in FDB.
+Drop packet when packet's dest mac is port mac in MAC table.
 
 **Testing Description**
 
-The switch will drop the packet when the packet sends to a dest MAC, but the same dest mac-address already exists in the FDB and is mapping to that port. 
+Drop packet when packet's dest mac is port mac in MAC table.
+
 ```
 Test example:                                
                                                                 | SRCPORT:MAC1 = DMAC|
@@ -447,10 +487,10 @@ Test example:
 Precondition/Setup:
 - Create VLAN as the basic configuration.
 - Create an FDB table as a basic configuration.
+- Add a non-existing ``MacX`` to port1
 
 | Goal |Steps |  Expect  |
 |-|-|-|
-| FDB added.| Add a non-existing ``MacX`` to port1. Check FDB |FDB added.|
 | Filter frame. | Send VLAN10 ``tagged`` packet with dest ``MacX`` on ``port1``. |Packet dropped|
 | Filter frame. | Send VLAN10 ``tagged`` packet with dest ``MAC1`` on ``port1``. |Packet dropped|
 
@@ -458,12 +498,12 @@ Precondition/Setup:
 
 **Testing Objective**
 
-For Native VLAN, only consider the ingress direction, the entry condition for VLAN, and the behavior below
+Testing native vlan.
 | Port mode | packet tag mode |  Action                                   |
 | ---------|--------------- | --------------------------------------- |
 | Access|Tag| Drop, if the native id does not match.       |
-| Trunk |Untag| Drop, if native VLAN id does not match..  |
-|       |Tag|  Drop, if the VLAN id does not match and does not meet the native VLAN case. |
+
+*For Native VLAN, only consider the ingress direction*
 
 **Testing Description**
 
@@ -474,12 +514,6 @@ Test example:
                                            | Y Native VLAN -> Forward(FDB:MAC=DMAC) -> VLAN:10:PORT
   pkt(tagged:10:DMAC)   ->  (Access:10)|DUT|
                                            | N Native VLAN -> Drop
-
-  pkt(untagged:10:DMAC) ->   (Trunk:10)|DUT| Native VLAN -> Forward(FDB:MAC=DMAC) -> VLAN:10:PORT
-
-                                           | Y (VLAN||Native VLAN) -> Forward(FDB:MAC=DMAC) -> VLAN:10:PORT
-  pkt(tagged:10:DMAC)   ->   (Trunk:10)|DUT|
-                                           | N (VLAN&Native VLAN) -> Drop
 ```
 **Precondition**
 - Create VLAN as the basic configuration.
@@ -492,46 +526,10 @@ Cases:
 |-|-|-|
 | Forwarding, ``VLAN10`` ``Tagged`` packet on ``Native`` from a ``VLAN10`` ``Access``.|Send ``tagged`` packet with dest ``mac3`` on ``port5``. |  ``tagged`` packet received on port3.|
 | Drop, ``VLAN40`` ``Tagged`` packet on ``Native`` from a ``Access``.|Send ``tagged`` packet with dest ``mac3`` on ``port5``. |  Packet dropped.|
-| Forwarding, ``Untagged`` packet on ``Native`` from a ``Trunk``.|Send ``Untagged`` packet with dest ``mac3`` on ``port1``. |  ``tagged`` packet received on port3.| ``Untagged`` packet with dest mac3 on port1. |  Packet dropped.|
-| Forwarding, ``VLAN10`` ``Tagged`` packet on ``Native`` from a ``VLAN10`` ``Trunk``.|Send ``tagged`` packet with dest ``mac3`` on ``port1``. |  ``tagged`` packet received on port3.|
-| Drop, ``VLAN40`` ``Tagged`` packet on ``Native`` from a ``Trunk``.|Send ``tagged`` packet with dest ``mac3`` on ``port1``. |  Packet dropped.|
+
 
 
 ## SAI APIs operations
-
-### Test case: Test VLAN related counters.
-**Testing Objective**
-
-For VLAN-related counters, SAI should be able to get the counter and clear them.
-
-Below is the sample API to operate those data
-
-Check counters
-```Python
-        stats = sai_thrift_get_vlan_stats(self.client, self.vlan10)
-        in_bytes = stats["SAI_VLAN_STAT_IN_OCTETS"]
-        out_bytes = stats["SAI_VLAN_STAT_OUT_OCTETS"]
-        in_packets = stats["SAI_VLAN_STAT_IN_PACKETS"]
-        in_ucast_packets = stats["SAI_VLAN_STAT_IN_UCAST_PKTS"]
-        out_packets = stats["SAI_VLAN_STAT_OUT_PACKETS"]
-        out_ucast_packets = stats["SAI_VLAN_STAT_OUT_UCAST_PKTS"]
-
-```
-Clear counters
-```Python
-sai_thrift_clear_vlan_stats(self.client, self.vlan10)
-```
-
-Precondition/Setup:
-- Create VLAN as the basic configuration.
-- Create an FDB table as a basic configuration.
-
-| Goal |Steps/Cases |  Expect  |
-|-|-|-|
-| Forwarding, ``VLAN10`` ``Tagged`` packet on ``Native`` from a ``VLAN10`` ``Access``.|Send ``tagged`` packet with dest ``mac3`` on ``port5``. |  ``tagged`` packet received on port3.|
-| Counter Changed accordingly.|Use the SAI API to check the counters | Counter increased, bytes counter: OCTETS increased, other counters + 1|
-|  Counter reset.|Use the SAI API to clear the counters.| Related counter is reset to zero. |
-
 
 ### Test case: Vlan member list.
 **Testing Objective**
@@ -569,6 +567,39 @@ Precondition/Setup:
 | VLAN member list and member count are right. |Use the SAI API to check the VLAN member |  Vlan member list.|
 | VLAN and its member removed.|Remove the VLAN member from VLAN 10 and remove VLAN. |  VLAN and its member removed.|
 | Error when creating member to un-exist VLAN. |Use the SAI API to create a VLAN member on VLAN 10 |  Vlan attribute is 0.|
+
+### Test case: Test VLAN related counters.
+**Testing Objective**
+
+For VLAN-related counters, SAI should be able to get the counter and clear them.
+
+Below is the sample API to operate those data
+
+Check counters
+```Python
+        stats = sai_thrift_get_vlan_stats(self.client, self.vlan10)
+        in_bytes = stats["SAI_VLAN_STAT_IN_OCTETS"]
+        out_bytes = stats["SAI_VLAN_STAT_OUT_OCTETS"]
+        in_packets = stats["SAI_VLAN_STAT_IN_PACKETS"]
+        in_ucast_packets = stats["SAI_VLAN_STAT_IN_UCAST_PKTS"]
+        out_packets = stats["SAI_VLAN_STAT_OUT_PACKETS"]
+        out_ucast_packets = stats["SAI_VLAN_STAT_OUT_UCAST_PKTS"]
+
+```
+Clear counters
+```Python
+sai_thrift_clear_vlan_stats(self.client, self.vlan10)
+```
+
+Precondition/Setup:
+- Create VLAN as the basic configuration.
+- Create an FDB table as a basic configuration.
+
+| Goal |Steps/Cases |  Expect  |
+|-|-|-|
+| Forwarding, ``VLAN10`` ``Tagged`` packet on ``Native`` from a ``VLAN10`` ``Access``.|Send ``tagged`` packet with dest ``mac3`` on ``port5``. |  ``tagged`` packet received on port3.|
+| Counter Changed accordingly.|Use the SAI API to check the counters | Counter increased, bytes counter: OCTETS increased, other counters + 1|
+|  Counter reset.|Use the SAI API to clear the counters.| Related counter is reset to zero. |
 
 
 
