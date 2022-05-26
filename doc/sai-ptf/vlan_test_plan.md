@@ -23,7 +23,6 @@
   - [SAI APIs operations](#sai-apis-operations)
     - [Test case: Vlan member list.](#test-case-vlan-member-list)
     - [Test case: Test VLAN related counters.](#test-case-test-vlan-related-counters)
-  - [ToDO Test Case: Scaling test cases](#todo-test-case-scaling-test-cases)
 ## Overriew
 The purpose of this test plan is to test the VLAN function from SAI.
 
@@ -432,7 +431,3 @@ Precondition/Setup:
 | Forwarding, ``VLAN10`` ``Untagged`` packet on ``Native`` from a ``VLAN10`` ``Access``.|Send ``Untagged`` packet with dest ``mac3`` on ``port5``. |  ``Untagged`` packet received on port3.|
 | Counter Changed accordingly.|Use the SAI API to check the counters | Counter increased, bytes counter: OCTETS increased, other counters + 1|
 |  Counter reset.|Use the SAI API to clear the counters.| Related counter is reset to zero. |
-
-
-
-## ToDO Test Case: Scaling test cases 

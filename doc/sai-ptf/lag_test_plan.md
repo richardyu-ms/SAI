@@ -15,8 +15,6 @@
   - [Test suite #1: PortChannel Loadbalanceing](#test-suite-1-portchannel-loadbalanceing)
   - [Test suite #2: Ingress/Egreee disable](#test-suite-2-ingressegreee-disable)
   - [Test suite #3: Remove Lag member](#test-suite-3-remove-lag-member)
-  - [ToDO Test suite #4: Scaling test cases](#todo-test-suite-4-scaling-test-cases)
-  - [ToDO Test suite #5: Hash LoadBalancing test cases](#todo-test-suite-5-hash-loadbalancing-test-cases)
 ## Overriew
 The purpose of this test plan is to test the LAG/PortChannel function from SAI.
 
@@ -176,6 +174,3 @@ How to check if each port of Lag receive an equal number of packets (if we have 
 |-|-|-|
 |Remove port16 and forwarding packet from port1 to port14,15|Remove port16 form Lag3 and Send packet on dev_port11 to lag3 100 times| Port14 and port15 will receive an equal number of packets.|
 
-## ToDO Test suite #4: Scaling test cases
-
-## ToDO Test suite #5: Hash LoadBalancing test cases
