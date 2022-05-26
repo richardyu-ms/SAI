@@ -27,12 +27,11 @@
 ## Overriew
 The purpose of this test plan is to test the VLAN function from SAI.
 
-
 ### Testbed
 Those tests will be run on the testbed structure, the components are:
 * PTF - running in a server that can connect to the target DUT
 * SAI server - running on a dut
-
+*P.S. All the tests are target on T0 scenario.*
 ## Scope
 The test will include three parts
 1. Vlan functionalities
@@ -105,7 +104,7 @@ For testing, we can use basic FDB APIs to Add the FDB entry into CAM. The Rule a
     ------------------------------------------
     | MAC   |Ports| VLAN     | Type | Action |
     |-------|-----|----------|----------------
-    | mac1  |Port1| vlan_oid |StATIC| FORWARD|
+    | mac1  |Port1| vlan_oid |STATIC| FORWARD|
     ------------------------------------------
 
    sai_thrift_fdb_entry_t(switch_id=self.switch_id, mac_address=mac1, bv_id=self.vlan_oid)

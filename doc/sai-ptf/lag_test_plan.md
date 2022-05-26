@@ -4,8 +4,12 @@
     - [Test Topology](#test-topology)
     - [Testbed](#testbed)
   - [Scope](#scope)
-- [Basic Configurations SAI API and sample packets](#basic-configurations-sai-api-and-sample-packets)
+- [Basic Configurations, SAI API and sample packets](#basic-configurations-sai-api-and-sample-packets)
   - [Basic Configurations And SAI API](#basic-configurations-and-sai-api)
+    - [Basic Portchannel configuration](#basic-portchannel-configuration)
+      - [Create lag and lag member Using SAI API](#create-lag-and-lag-member-using-sai-api)
+    - [Basic Route Entry](#basic-route-entry)
+      - [Create Router Entry Using SAI API](#create-router-entry-using-sai-api)
   - [Packets](#packets)
 - [Test suites](#test-suites)
   - [Test suite #1: PortChannel Loadbalanceing](#test-suite-1-portchannel-loadbalanceing)
@@ -24,7 +28,7 @@ Those tests will be run on the testbed structure, the components are:
 * PTF - running in a server that can connect to the target DUT
 * SAI server - running on a dut
 
-*p.s. cause the SAI testing will not depend on any sonic components, then there will be no specific topology(T0 T1 T2) for testing.*
+*P.S. All the tests are target on T0 scenario.*
 
 ## Scope
 The test will include two parts
