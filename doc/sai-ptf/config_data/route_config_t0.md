@@ -5,6 +5,7 @@
     - [rotue entries](#rotue-entries)
   - [APIs for Route related configuration](#apis-for-route-related-configuration)
     - [Create VLAN Interface and Route entry](#create-vlan-interface-and-route-entry)
+    - [Create LAG  Router interface and Route entry](#create-lag-router-interface-and-route-entry)
   - [Sample data/packet](#sample-datapacket)
     - [Packet example](#packet-example)
 ## Overriew
@@ -39,7 +40,7 @@ Neighbors
 |-|-|-|
 |nb1-8| 192.168.10.11 ~ 192.168.10.18 | 10:00:11:11:11:11 - 10:00:88:88:88:88 |
 |nb9-16| 192.168.20.11 ~ 192.168.20.18 | 20:00:11:11:11:11 - 20:00:88:88:88:88 |
-|nb17-32| 192.168.0.11 ~ 192.168.0.26 | 00:00:11:11:11:11 - 00:00:16:16:16:16 |
+|nb23-32| 192.168.0.17 ~ 192.168.0.26 | 00:00:77:77:77:77 - 00:00:ff:ff:ff:ff |
 |nbvlan1000_gw| 192.168.10.255 | FF:FF:FF:FF:FF:FF |
 |nbvlan2000_gw| 192.168.20.255 | FF:FF:FF:FF:FF:FF |
 
@@ -49,7 +50,7 @@ Route entry
 |-|-|-|
 | 192.168.10.11 ~ 192.168.10.18 |port1 - 8 | 192.168.10.11 - 192.168.10.18 |
 | 192.168.20.11 ~ 192.168.20.18 | port9 -16 | 192.168.20.11 - 192.168.20.18 |
-| 192.168.0.11 ~ 192.168.0.26 | port17-32 | 192.168.0.11 - 192.168.0.26 |
+| 192.168.0.17 ~ 192.168.0.26 | port23-32 | 192.168.0.17 - 192.168.0.26 |
 |192.168.10.1|vlanInterface(VLAN1000)|CPU_PORT|
 |192.168.20.1|vlanInterface(VLAN2000)|CPU_PORT|
 
@@ -92,6 +93,36 @@ Route entry
    sai_thrift_create_route_entry(
             self.client, self.route_entry1, next_hop_id=self.nhop1)
   ```
+### Create LAG  Router interface and Route entry
+
+Neighbors
+
+|Name|IP|dest_mac|
+|-|-|-|
+|lag1_nb| 192.168.0.11 | 00:00:11:11:11:11 |
+|lag2_nb| 1 192.168.0.12|00:00:22:22:22:22 |
+|lag3_nb| 192.168.0.13| 00:00:33:33:33:33 |
+Route entry
+
+|DestIp|Next Hop |Next Hop ip|
+|-|-|-|
+| 192.168.0.11  |lag1:port17-18|192.168.0.11  |
+|192.168.0.12 |lag2: port19 -20 | 192.168.0.12 |
+| 192.168.0.13  | lag3:port21-22 | 192.168.0.13 |
+
+```Python
+        nhop = sai_thrift_create_next_hop(self.client,
+                                          ip=sai_ipaddress('192.168.0.11'),
+                                          router_interface_id=self.lag1_rif,
+                                          type=SAI_NEXT_HOP_TYPE_IP)
+        neighbor_entry = sai_thrift_neighbor_entry_t(
+            rif_id=self.lag1_rif, ip_address=sai_ipaddress('192.168.0.11'))
+        sai_thrift_create_neighbor_entry(self.client, neighbor_entry,
+                                         dst_mac_address='00:11:11:11:11:11')
+        route1 = sai_thrift_route_entry_t(
+            vr_id=self.default_vrf, destination=sai_ipprefix('192.168.0.11/32'))
+        sai_thrift_create_route_entry(self.client, route1, next_hop_id=nhop)
+
 
 ## Sample data/packet
 
