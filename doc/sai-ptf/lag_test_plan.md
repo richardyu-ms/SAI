@@ -28,17 +28,16 @@ The purpose of this test plan is to test the LAG/PortChannel function from SAI.
 Those tests will be run on the testbed structure, the components are:
 * PTF - running in a server that can connect to the target DUT
 * SAI server - running on a dut
-
 ## Test Configuration
 
 For the test configuration, please refer to the file 
   - [VLAN_config](./config_data/vlan_config_t0.md)
   - [FDB_config](./config_data/fdb_config_t0.md)
   - [Route_config](./config_data/route_config_t0.md)
-
+  
 **Note. All the tests will be based on the configuration above, if any additional configuration is required, it will be specified in the Test case.**
 
-
+## sk
 ## Variations
 Cause the testbed might also encounter some issues like the host interface being down. 
 Before running the actual test there will need some sanity test to check the DUT status and select the active ports for testing.

@@ -105,8 +105,8 @@ Tagged:
 
 #### Test Data/Packet
 [Sample_Packet](./config_data/vlan_config_t0.md#sample-datapacket)
-- Packet(Untag)
-- Packet(Untag)
+- Input: Packet(Untag) and Packet(Tag)
+- Expected: Packet(Tag)
 
   *p.s. please refer the sample packet in [VLAN_config#Sample_Packet](./config_data/vlan_config_t0.md#sample-datapacket)*
 
@@ -131,8 +131,8 @@ Test example:
 #### Test Data/Packet
 
 [Sample_Packet](./config_data/vlan_config_t0.md#sample-datapacket)
-- Packet(Untag)
-- Packet(Untag)
+- Input: Packet(Untag)
+- Expected: Drop
 
 #### Additional config:
 - Add a non-existing ``MacX`` to port1
@@ -166,8 +166,8 @@ For mac learning in VLAN scenario, in contain those two cases
 #### Test Data/Packet
 
 [Sample_Packet](./config_data/vlan_config_t0.md#sample-datapacket)
-- Packet(Untag)
-- Packet(Untag)
+- Input: Packet(Untag)
+- Expected: Packet(Untag)
 
 #### Additional config:
 - Do not config the MAC table
@@ -202,8 +202,8 @@ For VLAN-related counters, SAI should be able to get the counter and clear them.
 
 #### Test Data/Packet
 [Sample_Packet](./config_data/vlan_config_t0.md#sample-datapacket)
-- Packet(Untag)
-- Packet(Untag)
+- Input: Packet(Untag)
+- Expected: Packet(Untag)
 
 #### Test Cases
 | Goal |Cases |  Expect  |
@@ -221,8 +221,8 @@ When disabled, no new MAC will be learned in the MAC table.
 #### Test Data/Packet
 
 [Sample_Packet](./config_data/vlan_config_t0.md#sample-datapacket)
-- Packet(Untag)
-- Packet(Untag)
+- Input: Packet(Untag)
+- Expected: Packet(Untag)
 
 #### Additional config:
 - Do not config the MAC table
@@ -304,6 +304,7 @@ Test example:
 
 ```
 #### Test Data/Packet
+**Both those two packets will be used in input and output.**
 - ARP request
   ```Python
   simple_arp_packet(
@@ -317,8 +318,7 @@ Test example:
   ```
 - ARP response
   ```Python
-  Untagged:
-
+  #Untagged:
   simple_arp_packet(
             eth_dst=MAC1, 
             eth_src=MAC2,
@@ -327,8 +327,8 @@ Test example:
             ip_snd=IP2,
             hw_snd=MAC2,
             hw_tgt=MAC1)
-  Tagged:
-
+  
+  #Tagged(Just Sample, not used in this case):
   simple_arp_packet(
             eth_dst=MAC1, 
             eth_src=MAC2,

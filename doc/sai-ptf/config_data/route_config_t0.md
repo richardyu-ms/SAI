@@ -34,6 +34,7 @@ VLAN interfaces route entries
 ### Create VLAN Interface and Route entry
 
 Neighbors
+
 |Name|IP|dest_mac|
 |-|-|-|
 |nb1-8| 192.168.10.11 ~ 192.168.10.18 | 10:00:11:11:11:11 - 10:00:88:88:88:88 |
@@ -43,6 +44,7 @@ Neighbors
 |nbvlan2000_gw| 192.168.20.255 | FF:FF:FF:FF:FF:FF |
 
 Route entry
+
 |DestIp|Next Hop |Next Hop ip|
 |-|-|-|
 | 192.168.10.11 ~ 192.168.10.18 |port1 - 8 | 192.168.10.11 - 192.168.10.18 |
