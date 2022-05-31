@@ -34,10 +34,11 @@ For the test configuration, please refer to the file
   - [VLAN_config](./config_data/vlan_config_t0.md)
   - [FDB_config](./config_data/fdb_config_t0.md)
   - [Route_config](./config_data/route_config_t0.md)
+  - [LAG_config](./config_data/LAG_config_t0.md)
+
   
 **Note. All the tests will be based on the configuration above, if any additional configuration is required, it will be specified in the Test case.**
 
-## sk
 ## Variations
 Cause the testbed might also encounter some issues like the host interface being down. 
 Before running the actual test there will need some sanity test to check the DUT status and select the active ports for testing.
@@ -99,4 +100,4 @@ For lag, we can disable it from ingress or egress direction, after we disable th
 #### Test Cases
 | Goal | Steps/Cases | Expect  |
 |-|-|-|
-|Packet dropped on port14| Disable egress and ingress on lag3 member2. send packet | Packet drop.|
+|Packet dropped on port22| Disable egress and ingress on lag3 member2. send packet | Packet drop.|
