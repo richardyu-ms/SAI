@@ -1,7 +1,6 @@
-from sai_thrift.sai_headers import *
-from sai_base_test import *
+from t0_base_test import SaiT0HelperBase
 
-class InitBasicData(PlatformSaiHelper):
+class InitBasicData(SaiT0HelperBase):
     """
     This is a test class use to trigger some basic verification when set up the basic t0 data configuration.
     """
@@ -11,7 +10,7 @@ class InitBasicData(PlatformSaiHelper):
         Test the basic setup proecss
         """
         #this process contains the switch_init process
-        SaiHelperBase.setUp(self)
+        SaiT0HelperBase.setUp(self)
 
     def runTest(self):
         """
