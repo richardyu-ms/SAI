@@ -23,7 +23,7 @@ This document describes the sample configuration data, sample test data/packet, 
 |HostIf|VLAN ID|Ports|Tag mode|
 |-|-|-|-|
 |Ethernet4-32|1000|Port1-8|Untag|
-|Ethernet36-72|2000|Port9-16|Untag|
+|Ethernet36-64|2000|Port9-16|Untag|
 
 ### VLAN Interfaces
 |VLAN ID | VLAN Interface IP | VLAN Interface MAC | 
@@ -95,7 +95,7 @@ VLAN interfaces route entries
 |VLAN ID | VLAN Member | NH IP | NH MAC|
 |-|-|-|-|
 |1000| Ethernet4-32 | 192.168.10.11 ~ 192.168.10.18 | 10:00:11:11:11:11 - 10:00:88:88:88:88 |
-|2000| Ethernet36-72 | 192.168.20.21 ~ 192.168.20.28 | 20:00:11:11:11:11 - 20:00:88:88:88:88 |
+|2000| Ethernet36-64 | 192.168.20.21 ~ 192.168.20.28 | 20:00:11:11:11:11 - 20:00:88:88:88:88 |
 
 
 ## LAG configuration
@@ -104,9 +104,9 @@ VLAN interfaces route entries
 
 |HostIf|VLAN ID|Ports|
 |-|-|-|
-|Ethernet76-80|lag1|Port17-18|
-|Ethernet84-88|lag2|Port19-20|
-|Ethernet92-96|lag3|Port21-22|
+|Ethernet68-72|lag1|Port17-18|
+|Ethernet76-80|lag2|Port19-20|
+|Ethernet84-88|lag3|Port21-22|
 
 
 ## FDB Configuration
