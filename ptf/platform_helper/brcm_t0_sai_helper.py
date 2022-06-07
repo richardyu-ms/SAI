@@ -40,18 +40,16 @@ class BrcmT0SaiHelper(CommonSaiHelper):
 
     # lists of default objects
     self.port_to_hostif_map = {}
-    self.port_to_bp_map = {}
-    self.hostifs = []
     
-    self.def_hostif_list = []
-    self.def_bridge_port_list = []
-    self.def_lag_list = []
-    self.def_lag_member_list = []
-    self.def_vlan_list = []
-    self.def_vlan_member_list = []
-    self.def_rif_list = []
-    self.def_nb_list = []
-    self.def_nh_list = []
+    self.hostif_list = []
+    self.bridge_port_list = []
+    self.lag_list = []
+    self.lag_member_list = []
+    self.vlan_list = []
+    self.vlan_member_list = []
+    self.rif_list = []
+    self.nb_list = []
+    self.nh_list = []
     
     def normal_setup(self):
         """
@@ -133,9 +131,9 @@ class BrcmT0SaiHelper(CommonSaiHelper):
             self.default_1q_bridge_id
         """
         print("Get default 1Q bridge...")
-        def_attr = sai_thrift_get_switch_attribute(
+        attr = sai_thrift_get_switch_attribute(
             self.client, default_1q_bridge_id=True)
-        self.default_1q_bridge_id = def_attr['default_1q_bridge_id']
+        self.default_1q_bridge_id = attr['default_1q_bridge_id']
 
 
     def get_default_vlan(self):
@@ -146,9 +144,9 @@ class BrcmT0SaiHelper(CommonSaiHelper):
             self.default_vlan_id
         """
         print("Get default vlan...")
-        def_attr = sai_thrift_get_switch_attribute(
+        attr = sai_thrift_get_switch_attribute(
             self.client, default_vlan_id=True)
-        self.default_vlan_id = def_attr['default_vlan_id']
+        self.default_vlan_id = attr['default_vlan_id']
 
     
     def remove_vlan_member(self):
@@ -272,8 +270,7 @@ class BrcmT0SaiHelper(CommonSaiHelper):
                 setattr(self, 'host_if%s' % i, hostif)
                 self.port_to_hostif_map[i]=hostif
                 sai_thrift_set_hostif_attribute(self.client, hostif_oid=hostif, oper_status=False)
-                self.def_hostif_list.append(hostif)
-                self.hostifs.append(hostif)
+                self.hostif_list.append(hostif)
             except BaseException as e:
                 print("Cannot create hostif, error : {}".format(e))
 
@@ -317,84 +314,84 @@ class BrcmT0SaiHelper(CommonSaiHelper):
         """
         print("Lag Configuration...")
         self.lag1 = sai_thrift_create_lag(self.client)
-        self.def_lag_list.append(self.lag1)
+        self.lag_list.append(self.lag1)
 
         self.lag1_member1 = sai_thrift_create_lag_member(
             self.client, lag_id=self.lag1, pord_id=self.port17)
-        self.def_lag_member_list.append(self.lag1_member1)
+        self.lag_member_list.append(self.lag1_member1)
         self.lag1_member2 = sai_thrift_create_lag_member(
             self.client, lag_id=self.lag1, pord_id=self.port18)
-        self.def_lag_member_list.append(self.lag1_member2)
+        self.lag_member_list.append(self.lag1_member2)
 
         self.lag1_rif = sai_thrift_create_router_interface(
             self.client,
             type=SAI_ROUTER_INTERFACE_TYPE_PORT,
             virtual_router_id=self.default_vrf,
             port_id=self.lag1)
-        self.def_rif_list.append(self.lag1_rif)
+        self.rif_list.append(self.lag1_rif)
 
 
         self.lag2 = sai_thrift_create_lag(self.client)
-        self.def_lag_list.append(self.lag2)
+        self.lag_list.append(self.lag2)
 
         self.lag2_member1 = sai_thrift_create_lag_member(
             self.client, lag_id=self.lag2, pord_id=self.port19)
-        self.def_lag_member_list.append(self.lag2_member1)
+        self.lag_member_list.append(self.lag2_member1)
         self.lag2_member2 = sai_thrift_create_lag_member(
             self.client, lag_id=self.lag2, pord_id=self.port20)
-        self.def_lag_member_list.append(self.lag2_member2)
+        self.lag_member_list.append(self.lag2_member2)
         self.lag2_rif = sai_thrift_create_router_interface(
             self.client,
             type=SAI_ROUTER_INTERFACE_TYPE_PORT,
             virtual_router_id=self.default_vrf,
             port_id=self.lag2)
-        self.def_rif_list.append(self.lag2_rif)
+        self.rif_list.append(self.lag2_rif)
 
 
         self.lag3 = sai_thrift_create_lag(self.client)
-        self.def_lag_list.append(self.lag3)
+        self.lag_list.append(self.lag3)
 
         self.lag3_member1 = sai_thrift_create_lag_member(
             self.client, lag_id=self.lag3, pord_id=self.port21)
-        self.def_lag_member_list.append(self.lag3_member1)
+        self.lag_member_list.append(self.lag3_member1)
         self.lag3_member2 = sai_thrift_create_lag_member(
             self.client, lag_id=self.lag3, pord_id=self.port22)
-        self.def_lag_member_list.append(self.lag3_member2)
+        self.lag_member_list.append(self.lag3_member2)
         self.lag3_rif = sai_thrift_create_router_interface(
             self.client,
             type=SAI_ROUTER_INTERFACE_TYPE_PORT,
             virtual_router_id=self.default_vrf,
             port_id=self.lag3)
-        self.def_rif_list.append(self.lag3_rif)
+        self.rif_list.append(self.lag3_rif)
 
 
     def disable_lag_member_ingree_egress(self):
         print("Disable lag member ingress egress...")
-        for lag_member in self.def_lag_member_list:
+        for lag_member in self.lag_member_list:
             sai_thrift_set_lag_member_attribute(self.client, lag_member, ingress_disable=True, egress_disable=True)
 
 
     def enable_lag_member_ingree_egress(self):
         print("Enable lag member ingress egress...")
-        for lag in self.def_lag_member_list:
+        for lag in self.lag_member_list:
             sai_thrift_set_lag_member_attribute(self.client, lag_member, ingress_disable=False, egress_disable=False)
 
 
     def remove_rifs(self):
         print("Teardown rif...")
-        for rif in self.def_rif_list:
+        for rif in self.rif_list:
             sai_thrift_remove_router_interface(self.client, rif)
 
 
     def remove_lag_members(self):
         print("Teardown lag...")
-        for lag_member in self.def_lag_member_list:
+        for lag_member in self.lag_member_list:
             sai_thrift_remove_lag_member(self.client, lag_member)
 
 
     def remove_lags(self):
         print("Teardown lag member...")
-        for lag in self.def_lag_list:
+        for lag in self.lag_list:
             sai_thrift_remove_lag(self.client, lag)
 
     def check_load_balance(self):
@@ -430,109 +427,96 @@ class BrcmT0SaiHelper(CommonSaiHelper):
         Output variables:
         self.vlan1000/2000
         self.vlan_member
-        self.lag{1~3}_rif
+        self.vlan_rif
         """
         print("Vlan Configuration...")
         # create vlan 1000 with port1, port8
         self.vlan1000 = sai_thrift_create_vlan(self.client, vlan_id=1000)
         self.vlan2000 = sai_thrift_create_vlan(self.client, vlan_id=2000)
-
         self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
-        self.def_vlan_list.append(self.vlan1000)
-        self.def_vlan_list.append(self.vlan2000)
-
+        self.vlan_list.append(self.vlan1000)
+        self.vlan_list.append(self.vlan2000)
         for i in range(1, 9):
-            vlan_member = sai_thrift_create_vlan_member(
+            self.create_vlan_member(self.vlan1000, i, 0);
+            self.create_vlan_member(self.vlan2000, i, 8);
+
+    def create_vlan_member(self, vlan_oid, vlan_member_index, port_index_offset):
+        attr = sai_thrift_get_vlan_attribute(self.client, vlan_oid, vlan_id==True)
+        vlan_id = attr['vlan_id']
+        port_index = vlan_member_index + port_index_offset
+        vlan_member = sai_thrift_create_vlan_member(
             self.client,
             vlan_id=self.vlan1000,
-            bridge_port_id=self.port_to_hostif_map[i],
+            bridge_port_id=self.bridge_port_list[port_index],
             vlan_tagging_mode=SAI_VLAN_TAGGING_MODE_UNTAGGED)
-            setattr(self, 'vlan1000_member%s_' % i, vlan_member)
-            self.def_vlan_member_list.append(self.vlan_member)
-            self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
-            sai_thrift_set_port_attribute(self.client, self.port_list[i], port_vlan_id=1000)
-
-        for i in range(9, 17):
-            vlan_member = sai_thrift_create_vlan_member(
-            self.client,
-            vlan_id=self.vlan2000,
-            bridge_port_id=self.port_to_hostif_map[i],
-            vlan_tagging_mode=SAI_VLAN_TAGGING_MODE_UNTAGGED)
-            setattr(self, 'vlan2000_member%s_' % (i-8), vlan_member)
-            self.def_vlan_member_list.append(self.vlan_member)
-            self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
-            sai_thrift_set_port_attribute(self.client, self.port_list[i], port_vlan_id=2000)
+        vlan_id_member = 'vlan{}_member'.format(vlan_id)
+        setattr(self, 'vlan1000_member%s' % vlan_id_member, vlan_member)
+        self.vlan_member_list.append(vlan_member)
+        self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
+        sai_thrift_set_port_attribute(self.client, self.port_list[port_index], port_vlan_id=vlan_id)
 
 
-    def create_vlan_interface(self):
-        print("Create vlan interface...")
-        self.vlan1000_rif = sai_thrift_create_router_interface(
+    def create_vlan_interface(self, vlan_oid=None, ip_address=None):
+        if vlan_oid != None:
+            attr = sai_thrift_get_vlan_attribute(self.client, vlan_oid, vlan_id==True)
+            vlan_id = attr['vlan_id']
+        else:
+            vlan_id = None
+        vlan_rif = sai_thrift_create_router_interface(
             self.client,
             type=SAI_ROUTER_INTERFACE_TYPE_VLAN,
             virtual_router_id=self.default_vrf,
-            vlan_id=self.vlan1000)
+            vlan_id=vlan_oid)
+        vlan_rifnh = sai_thrift_create_next_hop(
+            self.client, 
+            ip=sai_ipaddress(ip_address),
+            router_interface_id=vlan_rif, 
+            type=CPU_PORT)
+        if vlan_oid != None:
+            setattr(self, 'vlan%s_rif' % (vlan_id), vlan_rif)
+        else:
+            setattr(self, 'vlan%s_rif' % (vlan_id), vlan_rif)
+            vlan_id = None
+        setattr(self, 'vlan%s_rif' % (vlan_id), vlan_rif)
         self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
-        self.def_rif_list.append(self.vlan1000_rif)
-        self.vlan1000_rifnh = sai_thrift_create_next_hop(
-            self.client, ip=sai_ipaddress('192.168.10.1'),
-            router_interface_id=self.vlan1000_rif, type=CPU_PORT)
 
+        self.rif_list.append(self.vlan_rif)
 
-        self.vlan2000_rif = sai_thrift_create_router_interface(
-            self.client,
-            type=SAI_ROUTER_INTERFACE_TYPE_VLAN,
-            virtual_router_id=self.default_vrf,
-            vlan_id=self.vlan2000)
+        setattr(self, 'vlan%s_rifnh' % (vlan_id), vlan_rifnh)
         self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
-        self.def_rif_list.append(self.vlan2000_rif)
-        self.vlan2000_rifnh = sai_thrift_create_next_hop(
-            self.client, ip=sai_ipaddress('192.168.20.1'),
-            router_interface_id=self.vlan2000_rif, type=CPU_PORT)
 
-    def create_port_router_interface(self):
+
+    def create_vlan_interfaces(self):
+        print("Create vlan interfaces...")
+        self.create_vlan_interface(vlan_id=self.vlan1000, ip_address='192.168.10.1')
+        self.create_vlan_interface(vlan_id=self.vlan2000, ip_address='192.168.20.1')
+
+
+    def create_port_router_interfaces(self):
         print("Create port router interface and neighbor entry ...")
-        for i in range(1, 33):
+        self.create_vlan_neighbor_entry()
+        for i in range(1, 32):
+            port_index = i
             if i <= 8:
-                ip_str = '192.168.10.1{}'.format(i)
-                mac_str = '10:00:{0}{0}:{0}{0}:{0}{0}:{0}{0}'.format(i)
-                rif = sai_thrift_create_router_interface(
-                    self.client, type=SAI_ROUTER_INTERFACE_TYPE_PORT,
-                    port_id=self.port_list[i], virtual_router_id=self.default_vrf) 
-                rifnh = sai_thrift_create_next_hop(
-                    self.client, ip=sai_ipaddress(ip_str),
-                    router_interface_id=rif, type=SAI_NEXT_HOP_TYPE_IP)
-                neighbor_entry = sai_thrift_neighbor_entry_t(
-                        rif_id=self.rif, 
-                        ip_address=sai_ipaddress(ip_str),
-                        dst_mac_address=mac_str)
+                self.create_port_router_interface(port_index, '192.168.10.11', '10:00:11:11:11:11')
             elif i <= 16:
-                ip_str = '192.168.20.1{}'.format(i-8)
-                mac_str = '20:00:{0}{0}:{0}{0}:{0}{0}:{0}{0}'.format(i-8)
-                rif = sai_thrift_create_router_interface(
-                    self.client, type=SAI_ROUTER_INTERFACE_TYPE_PORT,
-                    port_id=self.port_list[i], virtual_router_id=self.default_vrf) 
-                rifnh = sai_thrift_create_next_hop(
-                    self.client, ip=sai_ipaddress(ip_str),
-                    router_interface_id=rif, type=SAI_NEXT_HOP_TYPE_IP)
-                neighbor_entry = sai_thrift_neighbor_entry_t(
-                    rif_id=self.rif, 
-                    ip_address=sai_ipaddress(ip_str),
-                    dst_mac_address=mac_str)
+                self.create_port_router_interface(port_index, '192.168.20.11', '20:00:11:11:11:11')
             else:
-                ip_str = '192.168.0.{}'.format(i)
-                mac_str = '00:00:{0}{0}:{0}{0}:{0}{0}:{0}{0}'.format(('%01x' % i))
-                rif = sai_thrift_create_router_interface(
-                    self.client, type=SAI_ROUTER_INTERFACE_TYPE_PORT,
-                    port_id=self.port_list[i], virtual_router_id=self.default_vrf) 
-                rifnh = sai_thrift_create_next_hop(
-                    self.client, ip=sai_ipaddress(ip_str),
-                    router_interface_id=rif, type=SAI_NEXT_HOP_TYPE_IP)
-                neighbor_entry = sai_thrift_neighbor_entry_t(
-                    rif_id=self.rif, 
-                    ip_address=sai_ipaddress(ip_str),
-                    dst_mac_address=mac_str)
-            setattr(self, 'nb%s' % (i), neighbor_entry)
+                self.create_port_router_interface(port_index, '192.168.0.17', '00:00:77:77:77:77')
 
+
+    def create_port_router_interface(self, port_index, ip_address, mac_address):
+        rif = sai_thrift_create_router_interface(
+        self.client, type=SAI_ROUTER_INTERFACE_TYPE_PORT,
+        port_id=self.port_list[port_index], virtual_router_id=self.default_vrf) 
+        rifnh = sai_thrift_create_next_hop(
+            self.client, ip=sai_ipaddress(ip_address),
+            router_interface_id=rif, type=SAI_NEXT_HOP_TYPE_IP)
+        neighbor_entry = sai_thrift_neighbor_entry_t(
+                rif_id=self.rif, 
+                ip_address=sai_ipaddress(ip_address),
+                dst_mac_address=mac_address)
+        setattr(self, 'nb%s' % (port_index), neighbor_entry)     
 
     def create_port_neighbor(self):
         print("Create lag router interface and neighbor entry ...")
@@ -543,8 +527,8 @@ class BrcmT0SaiHelper(CommonSaiHelper):
         neighbor_entry = sai_thrift_neighbor_entry_t(
             rif_id=self.lag1_rif, ip_address=sai_ipaddress('192.168.0.11'))
         self.lag1_nb = sai_thrift_create_neighbor_entry(self.client, neighbor_entry,
-            dst_mac_address='00:11:11:11:11:11')
-        self.def_nb_list.append(self.lag1_nb)
+            dst_mac_address='00:00:11:11:11:11')
+        self.nb_list.append(self.lag1_nb)
         route1 = sai_thrift_route_entry_t(
             vr_id=self.default_vrf, destination=sai_ipprefix('192.168.0.11/32'))
         sai_thrift_create_route_entry(self.client, route1, next_hop_id=nhop)
@@ -557,7 +541,7 @@ class BrcmT0SaiHelper(CommonSaiHelper):
             rif_id=self.lag2_rif, ip_address=sai_ipaddress('192.168.0.12'))
         self.lag2_nb = sai_thrift_create_neighbor_entry(self.client, neighbor_entry,
             dst_mac_address='00:00:22:22:22:22')
-        self.def_nb_list.append(self.lag2_nb)
+        self.nb_list.append(self.lag2_nb)
         route2 = sai_thrift_route_entry_t(
             vr_id=self.default_vrf, destination=sai_ipprefix('192.168.0.12/32'))
         sai_thrift_create_route_entry(self.client, route2, next_hop_id=nhop)
@@ -570,29 +554,30 @@ class BrcmT0SaiHelper(CommonSaiHelper):
             rif_id=self.lag3_rif, ip_address=sai_ipaddress('192.168.0.13'))
         self.lag3_nb = sai_thrift_create_neighbor_entry(self.client, neighbor_entry,
             dst_mac_address='00:00:33:33:33:33')
-        self.def_nb_list.append(self.lag3_nb)
+        self.nb_list.append(self.lag3_nb)
         route3 = sai_thrift_route_entry_t(
             vr_id=self.default_vrf, destination=sai_ipprefix('192.168.0.13/32'))
         sai_thrift_create_route_entry(self.client, route3, next_hop_id=nhop)
         
 
-
-    def create_neighbor_entry(self):
-        print("Create neighbor entry...")
+    def create_vlan_neighbor_entry(self):
+        print("Create vlan neighbor entry...")
         self.vlan1000_nb_entry = sai_thrift_neighbor_entry_t(
             rif_id=self.vlan1000_rif, 
             ip_address=sai_ipaddress('192.168.10.255'),
             dst_mac_address='FF:FF:FF:FF:FF:FF')
-        self.def_nb_list
+        self.nb_list.append(self.vlan1000_nb_entry)
 
         self.vlan2000_nb_entry = sai_thrift_neighbor_entry_t(
             rif_id=self.vlan2000_rif, 
             ip_address=sai_ipaddress('192.168.20.255'),
             dst_mac_address='FF:FF:FF:FF:FF:FF')
+        self.nb_list.append(self.vlan2000_nb_entry)
+
 
     def create_bridge_port(self):
-        print("Create bridege port on port1-16...")
-        for i in range(1, 17):
+        print("Create bridege port on port0-31...")
+        for i in range(0, 32):
             port_bp = sai_thrift_create_bridge_port(
             self.client,
             bridge_id=self.default_1q_bridge,
@@ -601,45 +586,97 @@ class BrcmT0SaiHelper(CommonSaiHelper):
             admin_state=True)
             setattr(self, 'port%s_bp' % i, port_bp)
             self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
-            self.port_to_bp_map[i] = port_bp
         
 
-    def disable_mac_learn(self):
-        print("Disble Vlan mac learning...")
-        for vlan in self.def_vlan_list:
-            sai_thrift_set_vlan_attribute(self.client, vlan, learn_disable=False)
+    def config_fdb(self):
+        """
+        +==========+=====================================+==========+======+=======================+
+        |   Name   |                 MAC                 |	PORT	| VLAN |         HostIf        |
+        +----------+-------------------------------------+----------+------+-----------------------+
+        |   mac0   |      00:00:00:00:00:11	             | Port0	|	   |    Ethernet0          | 
+        |  mac1-8  |00:11:11:11:11:11 - 00:88:88:88:88:88| Port1-8	| 1000 | Ethernet4-Ethernet32  |
+        |  mac9-16 |00:99:99:99:99:99 - 01:66:66:66:66:66| Port9-16 | 2000 | Ethernet36-Ethernet64 |
+        | mac17-31 |01:77:77:77:77:77 - 03:11:11:11:11:11| Port17-31|      |                       |
+        +==========+=====================================+==========+======+=======================+
+        """
+        print("Create fdb config for L2 testing...")
+        for i in range(0, 32):
+            mac = generate_fdb_mac_address(i)
+            fdb_entry = sai_thrift_fdb_entry_t(
+                switch_id=self.switch_id, 
+                mac_address= mac if i >= 1 else '00:00:00:00:00:11', 
+                bv_id=self.vlan1000 if i >= 1 and i <= 8 else self.vlan2000 if i <= 16 else None)
+            sai_thrift_create_fdb_entry(
+                self.client,
+                fdb_entry,
+                type=SAI_FDB_ENTRY_TYPE_STATIC,
+                bridge_port_id=self.bridge_port_list[i],
+                packet_action=SAI_PACKET_ACTION_FORWARD)
 
 
-    def enable_mac_learn(self):
-        print("Enable Vlan mac learning...")
-        for vlan in self.def_vlan_list:
-            sai_thrift_set_vlan_attribute(self.client, vlan, learn_disable=True)
-
-
-    def set_native_vlan(self, port_id=None, port_vlan_id=None):
-        print("Set Native vlan 1000 on a port...")
-        sai_thrift_set_port_attribute(self.client, port_id, port_vlan_id)
-
-
-    def clear_vlan_counters(self):
+    def remove_vlan_counters(self):
         print("Clear Vlan counters...")
-        for vlan in self.def_vlan_list:
+        for vlan in self.vlan_list:
             sai_thrift_clear_vlan_stats(self.client, vlan)
+
+
+    def remove_fdb_entries(self):
+        print("Clear all learned FDB entries with vlan id...")
+        for vlan in self.vlan_list:  
+            sai_thrift_flush_fdb_entries(self.client, vlan, entry_type=SAI_FDB_ENTRY_TYPE_DYNAMIC)
 
 
     def remove_vlan_members(self):
         print("Teardown lags...")
-        for vlan_member in self.def_vlan_member_list:
+        for vlan_member in self.vlan_member_list:
             sai_thrift_remove_vlan_member(self.client, vlan_member)
 
 
     def remove_vlans(self):
         print("Teardown lag members...")
-        for vlan in self.def_vlan_list:
+        for vlan in self.vlan_list:
             sai_thrift_remove_vlan(self.client, vlan)
 
 
     def remove_hostifs(self):
         print("Teardown host interfaces...")
-        for hostif in self.def_hostif_list:
+        for hostif in self.hostif_list:
             sai_thrift_remove_hostif(self.client, hostif)
+
+
+    def change_mac(mac, offset):
+        mac = mac.replace(':', '')
+        new_mac = "{:012X}".format(int(mac, 16) + offset)
+        new_mac = new_mac.upper()
+        new_mac = ':'.join(new_mac[i:i+2] for i in range(0, len(new_mac), 2))
+        return new_mac
+    
+
+    def generate_fdb_mac_address(self, seed):
+        tmp =  % 10
+        cnt = seed // 10
+        str1 = str(tmp) * 10
+        str2 = '{:02}'.format(cnt)
+        mac = str2 + str1
+        mac = ':'.join(mac[i:i+2] for i in range(0, len(mac), 2))
+        return new_str
+
+    def generate_port_ip_address(self, mac_prefix, seed):
+        #to do
+        tmp =  % 10
+        cnt = seed // 10
+        str1 = str(tmp) * 10
+        str2 = '{:02}'.format(cnt)
+        mac = str2 + str1
+        mac = ':'.join(mac[i:i+2] for i in range(0, len(mac), 2))
+        return new_str
+        
+    def generate_port_mac_address(self, mac_prefix, seed):
+        #to do
+        tmp =  % 10
+        cnt = seed // 10
+        str1 = str(tmp) * 10
+        str2 = '{:02}'.format(cnt)
+        mac = str2 + str1
+        mac = ':'.join(mac[i:i+2] for i in range(0, len(mac), 2))
+        return new_str
