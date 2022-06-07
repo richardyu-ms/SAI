@@ -95,7 +95,6 @@ Test Steps:
 
 Drop packet when the destination port from MAC table search is the port which packet come into the switch.
 
-**This test will cover tagged and untagged mode respectivily.**
 
 ```
 Test example(Untag):                                
@@ -122,7 +121,6 @@ Flooding
                                                              | Port8|
 ```
 
-**This test will cover tagged and untagged mode respectivily.**
 
 ### Test Steps: <!-- omit in toc --> 
   - Create ``Untagged``/``Tagged VLAN1000`` packet, with ``mac1`` as source MAC and a un-existing ``MacX`` as dest MAC
@@ -140,7 +138,6 @@ For mac learning in VLAN scenario, after learning the mac address from the packe
   pkt(Untag:DMAC=MAC1)  -> Port2:Access:VLAN1000-> Port1:Access:VLAN1000 -> pkt(Untag:DMAC=MAC1)
 
 ```
-**This test will cover tagged and untagged mode respectivily.**
 ### Test Steps: <!-- omit in toc --> 
   - Create ``Untagged``/``Tagged VLAN1000`` packet, with a un-existing ``MacX`` as src MAC and ``mac2`` as dest MAC
   - Send packet on a VLAN source port1.
@@ -178,7 +175,6 @@ When add a VLAN member to a non-exist VLAN, it will fail.
 ### Testing Objective <!-- omit in toc --> 
 
 For VLAN-related counters, SAI should be able to get the counter and clear them.
-**This test will cover tagged and untagged mode respectivily.**
 
 ### Test Steps: <!-- omit in toc --> 
 Steps:
@@ -196,7 +192,6 @@ Steps:
 ### Testing Objective <!-- omit in toc --> 
 Test the function when disabling VLAN MAC learning.
 When disabled, no new MAC will be learned in the MAC table.
-**This test will cover tagged and untagged mode respectivily.**
 
 ### Additional config: <!-- omit in toc --> 
 - Do not config the MAC table
