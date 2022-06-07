@@ -63,8 +63,6 @@ In this VLAN test, most of test case will be tested with Tagged or Untagged pack
 ### Testing Objective <!-- omit in toc --> 
 This test verifies the VLAN function around untag and access ports.
 
-**This test will cover tagged and untagged mode respectivily.**
-
 *p.s. This test will not check function with the native VLAN scenario. Please make sure the native VLAN will not impact the result.*
 
 With an untagged packet, on the access port, when ingress and egress happen, the behavior as below
@@ -222,7 +220,7 @@ Server To Server
                                               |L3| <-> |Virtual Switch| 
   PC2 <- pkt(Untag) <- |DUT|Port9:Access:VLAN2000
 ```
-*All the layer 3 router tables are created as the basic config, not MAC and ARP learning in this test process.*
+
 The process is as below:
 1. PC1 sends a untag packet to port1, which is a VLAN1000 access port
 2. Based on packet dest IP, derive the route to the dest IP, Dest MAC and Port derived from L3 table. Then SRC MAC change to Switch MAC, Dest MAC change to PORT MAC, forwarding to PORT9
