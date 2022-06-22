@@ -40,3 +40,5 @@ test/saithrift/src/gen-cpp/
 test/saithrift/src/gen-py/
 test/saithrift/src/obj/
 **/*.pyc
+
+dev-jy/
