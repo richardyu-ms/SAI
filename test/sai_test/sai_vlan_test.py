@@ -24,7 +24,7 @@ from ptf import config
 from ptf.testutils import *
 from ptf.thriftutils import *
 from sai_utils import *
-
+import pdb
 
 class VlanMemberListTest(T0TestBase):
     """
@@ -253,6 +253,7 @@ class TaggedVlanStatusTest(T0TestBase):
         in_ucast_packets = stats["SAI_VLAN_STAT_IN_UCAST_PKTS"]
         out_packets = stats["SAI_VLAN_STAT_OUT_PACKETS"]
         out_ucast_packets = stats["SAI_VLAN_STAT_OUT_UCAST_PKTS"]
+        pdb.set_trace()
         self.assertEqual((in_packets, in_packets_pre + 1),
                         'vlan IN packets counter {} != {}'.format(
                             in_packets, in_packets_pre + 1))
