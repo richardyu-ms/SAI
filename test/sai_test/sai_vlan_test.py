@@ -43,7 +43,7 @@ class VlanMemberListTest(T0TestBase):
         for i in range(0, 8):
             self.assertEqual(self.vlans[10].vlan_mport_oids[i], mbr_list[i])
         for i in range(8, 16):
-            self.assertEqual(self.vlans[10].vlan_mport_oids[i - 8], mbr_list[i]) 
+            self.assertEqual(self.vlans[20].vlan_mport_oids[i - 8], mbr_list[i]) 
 
         # Adding vlan members and veryfing vlan member list
         new_vlan_member = sai_thrift_create_vlan_member(
