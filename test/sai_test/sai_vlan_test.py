@@ -173,7 +173,7 @@ class VlanMemberListTest(T0TestBase):
     This test verifies the VLAN member list using SAI_VLAN_ATTR_MEMBER_LIST
     """
     def setUp(self):
-        super(VlanMemberListTest, self).setUp()
+        T0TestBase.setUp(self, is_reset_default_vlan=False)
 
     def runTest(self):
         print("VlanMemberListTest")
@@ -223,7 +223,7 @@ class VlanMemberListTest(T0TestBase):
         """
         Remove all the vlans and vlan members
         """
-        super(VlanMemberListTest, self).tearDown()
+        pass
 
 
 
@@ -232,7 +232,7 @@ class VlanMemberInvalidTest(T0TestBase):
     This test verifies when adding a VLAN member to a non-exist VLAN, it will fail.
     """
     def setUp(self):
-        super(VlanMemberInvalidTest, self).setUp()
+        T0TestBase.setUp(self, is_reset_default_vlan=False)
 
     def runTest(self):
         print("VlanMemberInvalidTest")
@@ -248,12 +248,12 @@ class VlanMemberInvalidTest(T0TestBase):
         """
         Remove all the vlans and vlan members
         """
-        super(VlanMemberInvalidTest, self).tearDown()
+        pass
 
 
 class DisableMacLearningTaggedTest(T0TestBase):
     def setUp(self):
-        super(DisableMacLearningTaggedTest, self).setUp()
+        T0TestBase.setUp(self, is_reset_default_vlan=False)
 
     def runTest(self):
         print("DisableMacLearningTaggedTest")
@@ -281,12 +281,12 @@ class DisableMacLearningTaggedTest(T0TestBase):
         """
         Remove all the vlans and vlan members
         """
-        super(DisableMacLearningTaggedTest, self).tearDown()
+        pass
 
 
 class DisableMacLearningUntaggedTest(T0TestBase):
     def setUp(self):
-        super(DisableMacLearningTaggedTest, self).setUp()
+        T0TestBase.setUp(self, is_reset_default_vlan=False)
 
     def runTest(self):
         print("DisableMacLearningUntaggedTest")
@@ -312,12 +312,13 @@ class DisableMacLearningUntaggedTest(T0TestBase):
         """
         Remove all the vlans and vlan members
         """
-        super(DisableMacLearningUntaggedTest, self).tearDown()
+        pass
 
 
 class ArpRequestFloodingTest(T0TestBase):
     def setUp(self):
-        super(ArpRequestFloodingTest, self).setUp()
+        T0TestBase.setUp(self, is_reset_default_vlan=False)
+
         ip2 = "192.168.0.2" 
         self.arp_request = simple_arp_packet(
                 eth_dst=self.local_server_mac_list[2],
@@ -331,14 +332,14 @@ class ArpRequestFloodingTest(T0TestBase):
             self, self.arp_request, [self.dev_port_list[2:9]])
 
     def tearDown(self):
-        super(ArpRequestFloodingTest, self).tearDown()
         sai_thrift_flush_fdb_entries(
             self.client, entry_type=SAI_FDB_FLUSH_ENTRY_TYPE_ALL)
 
 
 class ArpRequestLearningTest(T0TestBase):
     def setUp(self):
-        super(ArpRequestLearningTest, self).setUp()
+        T0TestBase.setUp(self, is_reset_default_vlan=False)
+
         ip1 = "192.168.0.1"
         ip2 = "192.168.0.2" 
         self.arp_response = simple_arp_packet(
@@ -355,14 +356,13 @@ class ArpRequestLearningTest(T0TestBase):
         verify_packet(self, self.arp_response, self.dev_port_list[1])
 
     def tearDown(self):
-        super(ArpRequestLearningTest, self).tearDown()
         sai_thrift_flush_fdb_entries(
             self.client, entry_type=SAI_FDB_FLUSH_ENTRY_TYPE_ALL)
             
 
 class TaggedVlanStatusTest(T0TestBase):
     def setUp(self):
-        super(TaggedVlanStatusTest, self).setUp()
+        T0TestBase.setUp(self, is_reset_default_vlan=False)
         self.tagged_pkt = simple_udp_packet(eth_dst=self.local_server_mac_list[2],
                 eth_src=self.local_server_mac_list[1],
                 vlan_vid=10,
@@ -435,14 +435,14 @@ class TaggedVlanStatusTest(T0TestBase):
         self.assertEqual(out_bytes, 0, 'vlan OUT bytes counter is not 0')
 
     def tearDown(self):
-        super(TaggedVlanStatusTest, self).tearDown()
         sai_thrift_flush_fdb_entries(
             self.client, entry_type=SAI_FDB_FLUSH_ENTRY_TYPE_ALL)
 
 
 class UntaggedVlanStatusTest(T0TestBase):
     def setUp(self):
-        super(UntaggedVlanStatusTest, self).setUp()
+        T0TestBase.setUp(self, is_reset_default_vlan=False)
+
         self.untaged_pkt = simple_udp_packet(eth_dst=self.local_server_mac_list[2],
                 eth_src=self.local_server_mac_list[1],
                 ip_id=101,
@@ -514,6 +514,5 @@ class UntaggedVlanStatusTest(T0TestBase):
         self.assertEqual(out_bytes, 0, 'vlan OUT bytes counter is not 0')
 
     def tearDown(self):
-        super(UntaggedVlanStatusTest, self).tearDown()
         sai_thrift_flush_fdb_entries(
             self.client, entry_type=SAI_FDB_FLUSH_ENTRY_TYPE_ALL)
