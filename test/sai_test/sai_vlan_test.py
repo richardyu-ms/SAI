@@ -246,7 +246,7 @@ class TaggedVlanStatusTest(T0TestBase):
         verify_packet(self, self.tagged_pkt, self.dev_port_list[2])
 
 
-        stats = sai_thrift_get_vlan_stats(self.client, self.vlan10)
+        stats = sai_thrift_get_vlan_stats(self.client, self.vlans[10].vlan_oid)
         in_bytes = stats["SAI_VLAN_STAT_IN_OCTETS"]
         out_bytes = stats["SAI_VLAN_STAT_OUT_OCTETS"]
         in_packets = stats["SAI_VLAN_STAT_IN_PACKETS"]
@@ -275,10 +275,10 @@ class TaggedVlanStatusTest(T0TestBase):
         verify_packet(self, self.tagged_pkt, self.dev_port_list[2])
 
         # Clear bytes and packets counter
-        sai_thrift_clear_vlan_stats(self.client, self.vlan10)
+        sai_thrift_clear_vlan_stats(self.client, self.vlans[10].vlan_oid)
 
         # Check counters
-        stats = sai_thrift_get_vlan_stats(self.client, self.vlan10)
+        stats = sai_thrift_get_vlan_stats(self.client, self.vlans[10].vlan_oid)
         in_bytes = stats["SAI_VLAN_STAT_IN_OCTETS"]
         out_bytes = stats["SAI_VLAN_STAT_OUT_OCTETS"]
         in_packets = stats["SAI_VLAN_STAT_IN_PACKETS"]
@@ -325,7 +325,7 @@ class UntaggedVlanStatusTest(T0TestBase):
         verify_packet(self, self.untaged_pkt, self.dev_port_list[2])
 
 
-        stats = sai_thrift_get_vlan_stats(self.client, self.vlan10)
+        stats = sai_thrift_get_vlan_stats(self.client, self.vlans[10].vlan_oid)
         in_bytes = stats["SAI_VLAN_STAT_IN_OCTETS"]
         out_bytes = stats["SAI_VLAN_STAT_OUT_OCTETS"]
         in_packets = stats["SAI_VLAN_STAT_IN_PACKETS"]
@@ -354,10 +354,10 @@ class UntaggedVlanStatusTest(T0TestBase):
         verify_packet(self, self.untaged_pkt, self.dev_port_list[2])
 
         # Clear bytes and packets counter
-        sai_thrift_clear_vlan_stats(self.client, self.vlan10)
+        sai_thrift_clear_vlan_stats(self.client, self.vlans[10].vlan_oid)
 
         # Check counters
-        stats = sai_thrift_get_vlan_stats(self.client, self.vlan10)
+        stats = sai_thrift_get_vlan_stats(self.client, self.vlans[10].vlan_oid)
         in_bytes = stats["SAI_VLAN_STAT_IN_OCTETS"]
         out_bytes = stats["SAI_VLAN_STAT_OUT_OCTETS"]
         in_packets = stats["SAI_VLAN_STAT_IN_PACKETS"]
