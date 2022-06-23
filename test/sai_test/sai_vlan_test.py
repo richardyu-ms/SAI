@@ -225,15 +225,14 @@ class TaggedVlanStatusTest(T0TestBase):
     """
     def setUp(self):
         T0TestBase.setUp(self, is_reset_default_vlan=False)
-        self.tagged_pkt = simple_udp_packet(eth_dst=self.local_server_mac_list[2],
-                eth_src=self.local_server_mac_list[1],
-                vlan_vid=10,
-                ip_id=101,
-                ip_ttl=64)
+        self.tagged_pkt = simple_tcp_packet(eth_dst='00:33:33:33:33:33',
+                                eth_src='00:11:11:11:11:11',
+                                ip_dst='172.16.0.1',
+                                ip_id=101,
+                                ip_ttl=64)
 
     def runTest(self):
         stats = sai_thrift_get_vlan_stats(self.client, self.vlans[10].vlan_oid)
-
         in_bytes_pre = stats["SAI_VLAN_STAT_IN_OCTETS"]
         out_bytes_pre = stats["SAI_VLAN_STAT_OUT_OCTETS"]
         in_packets_pre = stats["SAI_VLAN_STAT_IN_PACKETS"]
@@ -305,11 +304,11 @@ class UntaggedVlanStatusTest(T0TestBase):
     def setUp(self):
         T0TestBase.setUp(self, is_reset_default_vlan=False)
 
-        self.untaged_pkt = simple_udp_packet(eth_dst=self.local_server_mac_list[2],
-                eth_src=self.local_server_mac_list[1],
-                ip_id=101,
-                ip_ttl=64)
-
+        self.untagged_pkt = simple_tcp_packet(eth_dst='00:33:33:33:33:33',
+                                eth_src='00:11:11:11:11:11',
+                                ip_dst='172.16.0.1',
+                                ip_id=101,
+                                ip_ttl=64)
     def runTest(self):
         stats = sai_thrift_get_vlan_stats(self.client, self.vlans[10].vlan_oid)
 
@@ -321,8 +320,8 @@ class UntaggedVlanStatusTest(T0TestBase):
         out_ucast_packets_pre = stats["SAI_VLAN_STAT_OUT_UCAST_PKTS"]
 
         print("Sending L2 packet port 1 -> port 2 [access vlan=10])")
-        send_packet(self, 1, self.untaged_pkt)
-        verify_packet(self, self.untaged_pkt, self.dev_port_list[2])
+        send_packet(self, 1, self.untagged_pkt)
+        verify_packet(self, self.untagged_pkt, self.dev_port_list[2])
 
 
         stats = sai_thrift_get_vlan_stats(self.client, self.vlans[10].vlan_oid)
@@ -350,8 +349,8 @@ class UntaggedVlanStatusTest(T0TestBase):
                         'vlan OUT bytes counter is 0')
 
         print("Sending L2 packet port 1 -> port 2 [access vlan=10])")
-        send_packet(self, 1, self.untaged_pkt)
-        verify_packet(self, self.untaged_pkt, self.dev_port_list[2])
+        send_packet(self, 1, self.untagged_pkt)
+        verify_packet(self, self.untagged_pkt, self.dev_port_list[2])
 
         # Clear bytes and packets counter
         sai_thrift_clear_vlan_stats(self.client, self.vlans[10].vlan_oid)
