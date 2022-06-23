@@ -33,6 +33,7 @@ from sai_thrift import sai_rpc
 import sai_thrift.sai_adapter as adapter
 from sai_thrift.sai_adapter import *
 from sai_utils import *
+import time
 
 THRIFT_PORT = 9092
 is_configured = False
@@ -221,3 +222,15 @@ class T0TestBase(ThriftInterfaceDataPlane):
             int: sai call result
         """
         return adapter.status
+
+    @staticmethod
+    def saiWaitFdbAge(timeout):
+        """
+        Wait for fdb entry to ageout
+
+        Args:
+            timeout (int): Timeout value in seconds
+        """
+        print("Waiting for fdb entry to age")
+        aging_interval_buffer = 10
+        time.sleep(timeout + aging_interval_buffer)
