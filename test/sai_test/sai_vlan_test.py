@@ -25,148 +25,6 @@ from ptf.testutils import *
 from ptf.thriftutils import *
 from sai_utils import *
 
-# class Vlan_Domain_Forwarding_Test(T0TestBase):
-#     """
-#     Verify the basic VLAN forwarding.
-#     In L2, if segement with VLAN tag and sends to a VLAN port, 
-#     segment should be forwarded inside a VLAN domain.
-#     """
-
-#     def setUp(self):
-#         """
-#         Test the basic setup process
-#         """
-#         T0TestBase.setUp(self, is_reset_default_vlan=False)
-
-#     def runTest(self):
-#         """
-#         Test VLAN forwarding
-#         """
-#         try:
-#             print("VLAN forwarding test.")
-#             for index in range(2, 9):
-#                 print("Forwarding in VLAN {} from {} to port: {}".format(
-#                     10,
-#                     self.dev_port_list[1], 
-#                     self.dev_port_list[index]))
-#                 pkt = simple_udp_packet(eth_dst=self.local_server_mac_list[index],
-#                                         eth_src=self.local_server_mac_list[1],
-#                                         vlan_vid=10,
-#                                         ip_id=101,
-#                                         ip_ttl=64)
-                    
-#                 send_packet(self, self.dev_port_list[1], pkt)
-#                 verify_packet(self, pkt, self.dev_port_list[index])
-#             for index in range(10, 17):
-#                 print("Forwarding in VLAN {} from {} to port: {}".format(
-#                     20,
-#                     self.dev_port_list[9], 
-#                     self.dev_port_list[index]))
-#                 pkt = simple_udp_packet(eth_dst=self.local_server_mac_list[index],
-#                                         eth_src=self.local_server_mac_list[9],
-#                                         vlan_vid=20,
-#                                         ip_id=101,
-#                                         ip_ttl=64)
-                    
-#                 send_packet(self, self.dev_port_list[9], pkt)
-#                 verify_packet(self, pkt, self.dev_port_list[index])
-#         finally:
-#             pass
-
-#     def tearDown(self):
-#         """
-#         Test the basic tearDown process
-#         """
-#         sai_thrift_flush_fdb_entries(
-#             self.client, entry_type=SAI_FDB_FLUSH_ENTRY_TYPE_ALL)
-
-
-# class Tagging_Access_Test(T0TestBase):
-#     """
-#     This test verifies the VLAN function around untag and access ports.
-#     """
-
-#     def setUp(self):
-#         super(Tagging_Access_Test, self).setUp()
-
-#     def runTest(self):
-#         self.UntagAccessToAccessTest()
-#         self.MismatchDropTest()
-
-#     def tearDown(self):
-#         """
-#         Test the basic tearDown process
-#         """
-#         sai_thrift_flush_fdb_entries(self.client, entry_type=SAI_FDB_FLUSH_ENTRY_TYPE_ALL)
-
-#         super(Tagging_Access_Test, self).tearDown()
-
-#     def UntagAccessToAccessTest(self):
-#         """
-#         Forwarding between tagged ports with untagged pkt
-#         """
-#         print("\UntagAccessToAccessTest()")
-#         try:
-#             for index in range(2, 9):
-#                 print("Sending untagged packet from vlan10 tagged port {} to vlan10 tagged port: {}".format(
-#                     10,
-#                     self.dev_port_list[1], 
-#                     self.dev_port_list[index]))
-#                 pkt = simple_udp_packet(eth_dst=self.local_server_mac_list[index],
-#                                         eth_src=self.local_server_mac_list[1],
-#                                         ip_id=101,
-#                                         ip_ttl=64)
-                    
-#                 send_packet(self, self.dev_port_list[1], pkt)
-#                 verify_packet(self, pkt, self.dev_port_list[index])
-#             for index in range(10, 17):
-#                 print("Sending untagged packet from vlan20 tagged port {} to vlan20 tagged port: {}".format(
-#                     self.dev_port_list[9], 
-#                     self.dev_port_list[index]))
-#                 pkt = simple_udp_packet(eth_dst=self.local_server_mac_list[index],
-#                                         eth_src=self.local_server_mac_list[9],
-#                                         ip_id=101,
-#                                         ip_ttl=64)
-                    
-#                 send_packet(self, self.dev_port_list[9], pkt)
-#                 verify_packet(self, pkt, self.dev_port_list[index])
-
-#         finally:
-#             pass
-
-#     def MismatchDropTest(self):
-#         """
-#         Dropping between tagged ports with mismatched tagged pkt
-#         """
-#         print("\nUnmatchDropTest()")
-#         try:
-#             for index in range(1, 9):
-#                 print("Sending vlan20 tagged packet from vlan20 tagged port {} to vlan10 tagged port: {}".format(
-#                     self.dev_port_list[9], 
-#                     self.dev_port_list[index]))
-#                 pkt = simple_udp_packet(eth_dst=self.local_server_mac_list[index],
-#                                         eth_src=self.local_server_mac_list[9],
-#                                         vlan_id=20,
-#                                         ip_id=101,
-#                                         ip_ttl=64)
-                    
-#                 send_packet(self, self.dev_port_list[9], pkt)
-#                 verify_no_other_packets(self, timeout=1)
-#             for index in range(9, 17):
-#                 print("Sending vlan10 tagged packet from {} to vlan20 tagged port: {}".format(
-#                     self.dev_port_list[1], 
-#                     self.dev_port_list[index]))
-#                 pkt = simple_udp_packet(eth_dst=self.local_server_mac_list[index],
-#                                         eth_src=self.local_server_mac_list[1],
-#                                         vlan_id=10,
-#                                         ip_id=101,
-#                                         ip_ttl=64)
-                    
-#                 send_packet(self, self.dev_port_list[1], pkt)
-#                 verify_no_other_packets(self, timeout=1)
-#         finally:
-#             pass
-
 
 class VlanMemberListTest(T0TestBase):
     """
@@ -204,7 +62,7 @@ class VlanMemberListTest(T0TestBase):
             self.assertEqual(self.vlans[10].vlan_mport_oids[i], mbr_list[i])
         self.assertEqual(new_vlan_member, mbr_list[8])
         for i in range(9, 17):
-            self.assertEqual(self.vlans[10].vlan_mport_oids[i - 8], mbr_list[i + 1]) 
+            self.assertEqual(self.vlans[20].vlan_mport_oids[i - 8], mbr_list[i + 1]) 
 
         # Removing vlan members and veryfing vlan member list
         sai_thrift_remove_vlan_member(self.client, new_vlan_member)
@@ -217,14 +75,11 @@ class VlanMemberListTest(T0TestBase):
         for i in range(0, 8):
             self.assertEqual(self.vlans[10].vlan_mport_oids[i], mbr_list[i])
         for i in range(8, 16):
-            self.assertEqual(self.vlans[10].vlan_mport_oids[i - 8], mbr_list[i])
+            self.assertEqual(self.vlans[20].vlan_mport_oids[i - 8], mbr_list[i])
 
     def tearDown(self):
-        """
-        Remove all the vlans and vlan members
-        """
-        pass
-
+        sai_thrift_flush_fdb_entries(
+            self.client, entry_type=SAI_FDB_FLUSH_ENTRY_TYPE_DYNAMIC)
 
 
 class VlanMemberInvalidTest(T0TestBase):
@@ -245,13 +100,13 @@ class VlanMemberInvalidTest(T0TestBase):
         self.assertEqual(incorrect_member, 0)   
 
     def tearDown(self):
-        """
-        Remove all the vlans and vlan members
-        """
         pass
 
 
 class DisableMacLearningTaggedTest(T0TestBase):
+    """
+    This test verifies the function when disabling VLAN MAC learning. When disabled, no new MAC will be learned in the MAC table.
+    """
     def setUp(self):
         T0TestBase.setUp(self, is_reset_default_vlan=False)
 
@@ -278,13 +133,13 @@ class DisableMacLearningTaggedTest(T0TestBase):
 
 
     def tearDown(self):
-        """
-        Remove all the vlans and vlan members
-        """
         pass
 
 
 class DisableMacLearningUntaggedTest(T0TestBase):
+    """
+    This test verifies the function when disabling VLAN MAC learning. When disabled, no new MAC will be learned in the MAC table.
+    """
     def setUp(self):
         T0TestBase.setUp(self, is_reset_default_vlan=False)
 
@@ -309,13 +164,14 @@ class DisableMacLearningUntaggedTest(T0TestBase):
         self.assertEqual(attr["available_fdb_entry"] - current_fdb_entry, 0)
 
     def tearDown(self):
-        """
-        Remove all the vlans and vlan members
-        """
-        pass
+        sai_thrift_flush_fdb_entries(
+            self.client, entry_type=SAI_FDB_FLUSH_ENTRY_TYPE_DYNAMIC)
 
 
 class ArpRequestFloodingTest(T0TestBase):
+    """
+    This test verifies the flooding when receive a arp request
+    """
     def setUp(self):
         T0TestBase.setUp(self, is_reset_default_vlan=False)
 
@@ -337,6 +193,9 @@ class ArpRequestFloodingTest(T0TestBase):
 
 
 class ArpRequestLearningTest(T0TestBase):
+    """
+    This test verifies the mac learning when receive a arp request
+    """
     def setUp(self):
         T0TestBase.setUp(self, is_reset_default_vlan=False)
 
@@ -361,6 +220,9 @@ class ArpRequestLearningTest(T0TestBase):
             
 
 class TaggedVlanStatusTest(T0TestBase):
+    """
+    This test verifies VLAN-related counters during 
+    """
     def setUp(self):
         T0TestBase.setUp(self, is_reset_default_vlan=False)
         self.tagged_pkt = simple_udp_packet(eth_dst=self.local_server_mac_list[2],
