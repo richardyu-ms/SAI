@@ -242,7 +242,7 @@ class TaggedVlanStatusTest(T0TestBase):
         out_ucast_packets_pre = stats["SAI_VLAN_STAT_OUT_UCAST_PKTS"]
 
         print("Sending L2 packet port 1 -> port 2 [access vlan=10])")
-        send_packet(self, 1, self.tagged_pkt)
+        send_packet(self, self.dev_port_list[1], self.tagged_pkt)
         verify_packet(self, self.tagged_pkt, self.dev_port_list[2])
         time.sleep(1)
 
@@ -271,7 +271,7 @@ class TaggedVlanStatusTest(T0TestBase):
                         'vlan OUT bytes counter is 0')
 
         print("Sending L2 packet port 1 -> port 2 [access vlan=10])")
-        send_packet(self, 1, self.tagged_pkt)
+        send_packet(self, self.dev_port_list[1], self.tagged_pkt)
         verify_packet(self, self.tagged_pkt, self.dev_port_list[2])
         time.sleep(1)
         # Clear bytes and packets counter
@@ -321,7 +321,7 @@ class UntaggedVlanStatusTest(T0TestBase):
         out_ucast_packets_pre = stats["SAI_VLAN_STAT_OUT_UCAST_PKTS"]
 
         print("Sending L2 packet port 1 -> port 2 [access vlan=10])")
-        send_packet(self, 1, self.untaged_pkt)
+        send_packet(self, self.dev_port_list[1], self.untaged_pkt)
         verify_packet(self, self.untaged_pkt, self.dev_port_list[2])
 
         time.sleep(1)
@@ -350,7 +350,7 @@ class UntaggedVlanStatusTest(T0TestBase):
                         'vlan OUT bytes counter is 0')
 
         print("Sending L2 packet port 1 -> port 2 [access vlan=10])")
-        send_packet(self, 1, self.untaged_pkt)
+        send_packet(self, self.dev_port_list[1], self.untaged_pkt)
         verify_packet(self, self.untaged_pkt, self.dev_port_list[2])
         time.sleep(1)
         # Clear bytes and packets counter
