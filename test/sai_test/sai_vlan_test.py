@@ -185,7 +185,7 @@ class ArpRequestFloodingTest(T0TestBase):
     def runTest(self):
         send_packet(self, 1, self.arp_request)
         verify_each_packet_on_multiple_port_lists(
-            self, [self.arp_request] * 7, self.dev_port_list[2:9])
+            self, [self.arp_request] * 7, [self.dev_port_list[2:9]])
 
     def tearDown(self):
         sai_thrift_flush_fdb_entries(
