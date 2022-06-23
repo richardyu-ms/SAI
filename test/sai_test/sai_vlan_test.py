@@ -62,7 +62,7 @@ class VlanMemberListTest(T0TestBase):
             self.assertEqual(self.vlans[10].vlan_mport_oids[i], mbr_list[i])
         self.assertEqual(new_vlan_member, mbr_list[8])
         for i in range(9, 17):
-            self.assertEqual(self.vlans[20].vlan_mport_oids[i - 8], mbr_list[i + 1]) 
+            self.assertEqual(self.vlans[20].vlan_mport_oids[i - 9], mbr_list[i]) 
 
         # Removing vlan members and veryfing vlan member list
         sai_thrift_remove_vlan_member(self.client, new_vlan_member)
