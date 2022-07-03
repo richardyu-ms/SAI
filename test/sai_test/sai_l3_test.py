@@ -25,6 +25,7 @@ from ptf import config
 from ptf.testutils import *
 from ptf.thriftutils import *
 from sai_utils import *
+import threading
 import pdb
 
 
@@ -205,16 +206,22 @@ class L3SviTest(T0TestBase):
         #Route to SVI and assign the dmac
         nbr_entry_1 = sai_thrift_neighbor_entry_t(rif_id=svi_rif_id,ip_address=sai_ipaddress(dest_ip1))
         sai_thrift_create_neighbor_entry(self.client, nbr_entry_1, dst_mac_address=dest_mac1)
-        nhop1 = sai_thrift_create_next_hop(self.client, ip=sai_ipaddress(dest_ip1), router_interface_id=svi_rif_id, type=SAI_NEXT_HOP_TYPE_IP)
-        route1 = sai_thrift_route_entry_t(vr_id=vr_id, destination=sai_ipprefix(dest_ip1+'/32'))
-        sai_thrift_create_route_entry(self.client, route1, next_hop_id=nhop1)
-        self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
+        #nhop1 = sai_thrift_create_next_hop(self.client, ip=sai_ipaddress(dest_ip1), router_interface_id=svi_rif_id, type=SAI_NEXT_HOP_TYPE_IP)
+        #route1 = sai_thrift_route_entry_t(vr_id=vr_id, destination=sai_ipprefix(dest_ip1+'/32'))
+        #sai_thrift_create_route_entry(self.client, route1, next_hop_id=nhop1)
+        #self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
 
         nbr_entry_2 = sai_thrift_neighbor_entry_t(rif_id=svi_rif_id,ip_address=sai_ipaddress(dest_ip2))
         sai_thrift_create_neighbor_entry(self.client, nbr_entry_2, dst_mac_address=dest_mac2)
-        nhop2 = sai_thrift_create_next_hop(self.client, ip=sai_ipaddress(dest_ip2), router_interface_id=svi_rif_id, type=SAI_NEXT_HOP_TYPE_IP)
-        route2 = sai_thrift_route_entry_t(vr_id=vr_id, destination=sai_ipprefix(dest_ip2+'/32'))
-        sai_thrift_create_route_entry(self.client, route2, next_hop_id=nhop2)
+        # nhop2 = sai_thrift_create_next_hop(self.client, ip=sai_ipaddress(dest_ip2), router_interface_id=svi_rif_id, type=SAI_NEXT_HOP_TYPE_IP)
+        # route2 = sai_thrift_route_entry_t(vr_id=vr_id, destination=sai_ipprefix(dest_ip2+'/32'))
+        # sai_thrift_create_route_entry(self.client, route2, next_hop_id=nhop2)
+        # self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
+
+        # base on the comments in test plan review meeting, change the route to a subnet route
+        nhop1 = sai_thrift_create_next_hop(self.client, ip=sai_ipprefix(dest_ip1+'/24'), router_interface_id=svi_rif_id, type=SAI_NEXT_HOP_TYPE_IP)
+        route1 = sai_thrift_route_entry_t(vr_id=vr_id, destination=sai_ipprefix(dest_ip1+'/24'))
+        sai_thrift_create_route_entry(self.client, route1, next_hop_id=nhop1)
         self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
 
         pkt1 = simple_tcp_packet(eth_dst=router_mac,eth_src=dest_mac2,ip_dst=dest_ip1,ip_src='192.168.0.1',ip_id=105,ip_ttl=64,vlan_vid=10)
@@ -226,20 +233,51 @@ class L3SviTest(T0TestBase):
         #pdb.set_trace()
         #BUG, expect a flood happen there, no flood
         #sleep a little while for fdb refresh
-        time.sleep(2)
+        time.sleep(1)
         send_packet(self, 1, pkt1)
         #verify_packet_any_port(self, exp_pkt, [17,18])
         verify_no_other_packets(self)        
         print("wait for 2 second for mac learning take effect ")
-        time.sleep(2)
+        time.sleep(1)
         # Unknown, learning happened after forwarding
         send_packet(self, 2, pkt2)
         #verify_packet(self, exp_pkt2, 1)
         #pdb.set_trace()
         idx,res=verify_packet_any_port(self, exp_pkt2, [1])
-        # BUG, no self filtering, and performance
         print("wait for 2 second for mac move take effect ")
-        time.sleep(2)
+        time.sleep(1)
         send_packet(self, 2, pkt2)        
         #verify_packet_any_port(self, exp_pkt2, [17,18])
         idx,res=verify_packet_any_port(self, exp_pkt2, [2])
+
+        threads = []
+        print("Start multi thread mac move test...")
+        print("Kick off threads")
+        for i in range(0, 10):
+            print(".", end = ' ')
+            t = threading.Thread(target=self.mac_move, args=(pkt1,pkt2,))
+            threads.append(t)
+            t.start()
+        
+        print("")
+        print("Wait for threads to finish")
+        for i in threads:
+            print(".", end = ' ')
+            t.join()
+        
+        print("multi thread mac move finished. Wait 1 second and flush the data plane.")
+        time.sleep(1)
+        self.dataplane.flush()
+        
+        send_packet(self, 2, pkt2)
+        #verify_packet(self, exp_pkt2, 1)
+        #pdb.set_trace()
+        idx,res=verify_packet_any_port(self, exp_pkt2, [2])
+
+
+    def mac_move(self, pkt1, pkt2):
+        for i in range(0, 100):
+            send_packet(self, 1, pkt1)
+            send_packet(self, 2, pkt2)
+
+
