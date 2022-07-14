@@ -63,6 +63,12 @@ def t0_fdb_config_helper(test_obj, is_create_fdb=True):
     # Todo dynamic use the vlan_member_port_map to add data to fdb
     test_obj.local_server_mac_list = local_server_mac_list
 
+def t0_fdb_tear_down_helper(test_obj):
+    '''
+    Args:
+        test_obj: test object
+    '''
+    sai_thrift_flush_fdb_entries(test_obj.client, entry_type=SAI_FDB_FLUSH_ENTRY_TYPE_ALL)
 
 class FdbConfiger(object):
     """
@@ -85,7 +91,8 @@ class FdbConfiger(object):
                            port_oids,
                            type=SAI_FDB_ENTRY_TYPE_STATIC,
                            vlan_oid=None,
-                           packet_action=SAI_PACKET_ACTION_FORWARD):
+                           packet_action=SAI_PACKET_ACTION_FORWARD,
+                           wait_sec=2):
         """
         Create FDB entries.
 
@@ -110,6 +117,9 @@ class FdbConfiger(object):
                 type=type,
                 bridge_port_id=port_oids[index],
                 packet_action=packet_action)
+        print("Waiting for FDB to get refreshed, {} seconds ...".format(
+            wait_sec))
+        time.sleep(wait_sec)
 
     def generate_mac_address_list(self, role, group, indexes):
         """
