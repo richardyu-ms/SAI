@@ -27,6 +27,7 @@ def t0_route_config_helper(test_obj, is_create_route=True, is_create_route_for_l
     route_configer = RouteConfiger(test_obj)
     if is_create_route:
         route_configer.create_default_route()
+        test_obj.port1_rif = route_configer.create_routeinterface_for_port(virtual_router_id=test_obj.default_vrf, port_id=test_obj.port_list[1])
 
     if is_create_route_for_lag:
         route_configer.create_route_and_neighbor_entry_for_port(ip_addr=test_obj.lag1_ip,
@@ -118,6 +119,15 @@ class RouteConfiger(object):
             route_entry=entry,
             packet_action=SAI_PACKET_ACTION_FORWARD)
         self.test_obj.assertEqual(self.test_obj.status(), SAI_STATUS_SUCCESS)
+
+    def create_routeinterface_for_port(self, port_id, virtual_router_id=None):
+        if virtual_router_id is None:
+            virtual_router_id = self.test_obj.default_vrf
+        
+        rif_id1 = sai_thrift_create_router_interface(self.client, virtual_router_id=virtual_router_id, type=SAI_ROUTER_INTERFACE_TYPE_PORT, port_id=port_id)
+        self.test_obj.assertEqual(self.test_obj.status(), SAI_STATUS_SUCCESS)
+        return rif_id1
+
 
     def create_route_and_neighbor_entry_for_port(self, ip_addr, mac_addr, port_id, virtual_router_id=None):
         if virtual_router_id is None:
