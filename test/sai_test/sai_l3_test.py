@@ -40,6 +40,46 @@ class L3IPv4LpmRouteTest(T0TestBase):
         """
         T0TestBase.setUp(self, is_reset_default_vlan=False)
 
+
+    def create_default_v4_v6_route_entry(self):
+        """
+        Create default v4 and v6 route entry.
+        """
+
+        print("Create default v4&v6 route entry...")
+        v6_default = sai_thrift_ip_prefix_t(addr_family=1,
+            addr=sai_thrift_ip_addr_t(ip6=DEFAULT_IP_V6_PREFIX),
+            mask=sai_thrift_ip_addr_t(ip6=DEFAULT_IP_V6_PREFIX))
+        entry = sai_thrift_route_entry_t(vr_id=self.default_vrf,
+            destination=v6_default)
+        self.default_ipv6_route_entry = sai_thrift_create_route_entry(
+            self.client,
+            route_entry=entry,
+            packet_action=SAI_PACKET_ACTION_DROP)
+        self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
+
+        entry = sai_thrift_route_entry_t(vr_id=self.default_vrf,
+            destination=sai_ipprefix(DEFAULT_IP_V4_PREFIX))
+        self.default_ipv4_route_entry = sai_thrift_create_route_entry(
+            self.client,
+            route_entry=entry,
+            packet_action=SAI_PACKET_ACTION_DROP)
+        self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
+
+
+    def create_default_route_intf(self, vr):
+        """
+        Create default route interface on loop back interface.
+        """
+        print("Create loop back interface...")
+        # attr = sai_thrift_get_switch_attribute(self.client, default_virtual_router_id=True)
+        # self.assertNotEqual(attr['default_virtual_router_id'], 0)
+        # self.default_vrf = attr['default_virtual_router_id']
+
+        self.loopback_intf = sai_thrift_create_router_interface(self.client, 
+            type=SAI_ROUTER_INTERFACE_TYPE_LOOPBACK, virtual_router_id=vr)
+        self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
+
     def runTest(self):
         print
         
@@ -61,13 +101,19 @@ class L3IPv4LpmRouteTest(T0TestBase):
         nhop_ip1_subnet = '20.20.20.0'
         ip_mask2 = '255.255.255.0'
 
-        vr_id = sai_thrift_create_virtual_router(self.client)
+        attr = sai_thrift_get_switch_attribute(self.client, default_virtual_router_id=True)
+        self.assertNotEqual(attr['default_virtual_router_id'], 0)
+        self.default_vrf = attr['default_virtual_router_id']
+
+        #vr_id = sai_thrift_create_virtual_router(self.client)
+        vr_id = self.create_default_v4_v6_route_entry()
+        self.create_default_route_intf(vr_id)
 
         rif_id1 = sai_thrift_create_router_interface(self.client, virtual_router_id=vr_id, type=SAI_ROUTER_INTERFACE_TYPE_PORT, port_id=port1)
         self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
         #Create another rif for the port2
-        rif_id2 = sai_thrift_create_router_interface(self.client, virtual_router_id=vr_id, type=SAI_ROUTER_INTERFACE_TYPE_PORT, port_id=port2)
-        self.assertEqual(self.status(), SAI_STATUS_SUCCESS)        
+        #rif_id2 = sai_thrift_create_router_interface(self.client, virtual_router_id=vr_id, type=SAI_ROUTER_INTERFACE_TYPE_PORT, port_id=port2)
+        self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
         
         pkt = simple_tcp_packet(eth_dst=router_mac,eth_src='00:22:22:22:22:22',ip_dst='10.10.10.1',ip_src='192.168.0.1',ip_id=105,ip_ttl=64)
 
