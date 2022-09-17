@@ -12,7 +12,9 @@
 *In this part, we will get to know what's the SAI-PTF v2 framework and how to set up it manually.*
 
 SAI-PTF v2 is upgraded from previous [SAI-PTF](../../test/saithrift/README.md) fremework.
-SAI PTFv2 has two parts, [PTF(Packet Test Framework)](https://github.com/p4lang/ptf) and [SAI PRC framework](../../meta/rpc/README.md).
+SAI PTFv2 has two parts, [PTF(Packet Test Framework)](https://github.com/p4lang/ptf) and [SAI PRC framework](../../meta/rpc/README.md). The logical connection is like:
+
+![Logocal topology](./img/logic_connection.png#=120x120)
 
 For SAI-PTF test, we can set up a simple test environment by following [SAI PTF introduction and manually setup Testbed](SAI_PTF_user-guide.md).
 
