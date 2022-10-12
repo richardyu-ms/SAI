@@ -37,7 +37,6 @@ from sai_thrift.sai_adapter import *
 from constant import *
 
 
-
 def sai_ipprefix(prefix_str):
     """
     Set IP address prefix and mask and return ip_prefix object
@@ -100,12 +99,14 @@ class ConfigDBOpertion():
     '''
     read config from config_db.json
     '''
+
     def __init__(self):
-        path =os.path.join( os.path.dirname(__file__),"resources/config_db.json")  #REPLACE
+        path = os.path.join(os.path.dirname(__file__),
+                            "resources/config_db.json")  # REPLACE
         self.config_json = None
-        with open(path,mode='r') as f:
+        with open(path, mode='r') as f:
             self.config_json = json.load(f)
-    
+
     def get_port_config(self):
         '''
         RETURN:
@@ -137,3 +138,43 @@ def sai_ipaddress(addr_str):
     ip_addr = sai_thrift_ip_address_t(addr_family=family, addr=addr)
 
     return ip_addr
+
+
+def generate_mac_address_list(role, group, indexes):
+    """
+    Generate mac addresses.
+
+    Args:
+        role: Role which is represented by the mac address(base on test plan config)
+        group: group number for the mac address(base on test plan config)
+        indexes: mac indexes
+
+    Returns:
+        default_1q_bridge_id
+    """
+    print("Generate MAC ...")
+    mac_list = []
+    for index in indexes:
+        mac = FDB_MAC_PREFIX + ':' + role + ':' + \
+            '{:02d}'.format(group) + ':' + '{:02d}'.format(index)
+        mac_list.append(mac)
+    return mac_list
+
+
+def generate_ip_address_list(role, group, indexes):
+    """
+    Generate ip addresses.
+
+    Args:
+        role: Role which is represented by the ip address(base on test plan config)
+        group: group number for the ip address(base on test plan config)
+        indexes: ip indexes
+
+    Returns:
+        default_1q_bridge_id
+    """
+    print("Generate IP ...")
+    ip_list = []
+    for index in indexes:
+        ip_list.append(role.format(group, index))
+    return ip_list
