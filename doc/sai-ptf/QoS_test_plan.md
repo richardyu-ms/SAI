@@ -167,7 +167,8 @@ LAG: EGRESS
 1. According to common config, config DSCP_TC, TC_IPG, pool, buffer profile in dynamic mode, flow_control for PG
 2. According to common config, config route for desinated ``server IP`` to a ``egress port``
 3. Disbale port TX to simulate congestion
-4. Keep sending ``server IP`` packet with length 1000, packet number < pool_size/pkt_length, check the stats of PG, below stats should being increased
+4. Keep sending ``server IP`` packet with length 1000 until packet drop happen. Recording the packet number as MaxPackets.
+5. Keep sending ``server IP`` packet with length 1000,  check the stats of PG, below stats should being increased. When these stats are not incresing, recording current packet number and Verify if the packet number belongs to (MaxPackets*0.8 ,MaxPackets*1.2)
    'SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS', 
    'SAI_INGRESS_PRIORITY_GROUP_STAT_BYTES', 
    'SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES', 
@@ -176,7 +177,7 @@ LAG: EGRESS
    'SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_WATERMARK_BYTES', 
    'SAI_INGRESS_PRIORITY_GROUP_STAT_XOFF_ROOM_CURR_OCCUPANCY_BYTES', 
    'SAI_INGRESS_PRIORITY_GROUP_STAT_XOFF_ROOM_WATERMARK_BYTES', 
-5. check the pool stats, below stats should being increased
+6. check the pool stats, below stats should being increased
    'SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES', 
    'SAI_BUFFER_POOL_STAT_WATERMARK_BYTES', 
    'SAI_BUFFER_POOL_STAT_XOFF_ROOM_CURR_OCCUPANCY_BYTES', 
@@ -203,9 +204,11 @@ LAG: EGRESS
 2. Make sure defind the xoff size in buffer pool, for a shared mode
 3. According to common config, set the xoff_th
 4. disable port tx
-5. send the packets, check the stats, when packet number from less to larger than (xoff_th/packet_length), stats should be the actual size
+5. send the packets, recording the maximum packet number as MaxPakcets which statisifies that stats should be the actual size
    'SAI_BUFFER_POOL_STAT_XOFF_ROOM_CURR_OCCUPANCY_BYTES', 
    'SAI_BUFFER_POOL_STAT_XOFF_ROOM_WATERMARK_BYTES', 
+6. repeat step 5 , get maximum packet number, and verify it belongs to (MaxPackets*0.8 ,MaxPackets*1.2)
+
 
 test_ingress_pg_stats_non_shared
 
@@ -213,9 +216,10 @@ test_ingress_pg_stats_non_shared
 2. Make sure defind the xoff as zero in buffer pool, for a non-shared mode
 3. According to common config, set the xoff_th
 4. disable port tx
-5. send the packets, check the stats, when packet number from less to larger than (xoff_th/packet_length), stats should be the xoff_th size for the most
+5. send the packets, recording the maximum packet number as MaxPakcets which satisfies that stats should be the xoff_th size for the most
    'SAI_BUFFER_POOL_STAT_XOFF_ROOM_CURR_OCCUPANCY_BYTES', 
    'SAI_BUFFER_POOL_STAT_XOFF_ROOM_WATERMARK_BYTES', 
+6. repeat step 5 , get maximum packet number, and verify it belongs to (MaxPackets*0.8 ,MaxPackets*1.2)
 
 - test_ingress_overflowed_pkt_recover
 
@@ -258,7 +262,7 @@ test_ingress_pg_stats_non_shared
 
 - test_ingress_static_shared
 
-1. repeat test test_ingress_headroom_stats, but config in stastic mode as the common config, and send packets number < (shared_static_th/packet_len)
+1. repeat test test_ingress_headroom_stats, but config in stastic mode as the common config
 2. Keep sending ``server IP`` packet with length 1000, check the pool and PG stats, those stats should increase
    'SAI_INGRESS_PRIORITY_GROUP_STAT_DROPPED_PACKETS', 
    'SAI_BUFFER_POOL_STAT_DROPPED_PACKETS'
