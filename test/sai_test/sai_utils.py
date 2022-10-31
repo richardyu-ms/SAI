@@ -178,3 +178,31 @@ def generate_ip_address_list(role, group, indexes):
     for index in indexes:
         ip_list.append(role.format(group, index))
     return ip_list
+
+def warm_test(is_runTest:bool=False, time_out=60, interval=1):
+    """
+    Method decorator for the method on warm testing.
+    
+    Depends on parameters [test_reboot_mode] and [test_reboot_stage].
+    Runs different method, test_starting, setUp_post_start and runTest
+    """
+    def _check_run_case(f):
+        def test_director(inst, *args):
+            if inst.test_reboot_mode:
+			#check and create file if not exist
+			# msg to promote change the text file content to rebooted
+                p = Path('/tmp/warm_reboot')
+				# write content to reboot-requested
+                times = 0
+                while times < time_out:
+                    if is_runTest:
+                        f(inst)
+                    txt = p.read_text()
+                    print(txt)
+                    times = times + 1
+                    time.sleep(interval)
+                    #if txt == 'rebooted':
+                    #   break
+            return f(inst)
+        return test_director
+    return _check_run_case

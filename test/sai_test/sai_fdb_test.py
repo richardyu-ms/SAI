@@ -39,32 +39,13 @@ class L2PortForwardingTest(T0TestBase):
         T0TestBase.setUp(self, is_reset_default_vlan=False)
         
 
+    @warm_test(is_runTest=True)
     def runTest(self):
         """
         Test fdb forwarding
         """
         try:
             print("FDB basic forwarding test.")
-            for index in range(2, 9):
-                print("L2 Forwarding from {} to port: {}".format(
-                    self.dut.port_obj_list[1].dev_port_index,
-                    self.dut.port_obj_list[index].dev_port_index))
-                dest_devs = self.servers[1]
-                src_dev = self.servers[1][1]
-                send_port = self.dut.port_obj_list[1]
-                self.recv_dev_port_idx = self.get_dev_port_index(
-                    dest_devs[index].l2_egress_port_idx)
-                pkt = simple_udp_packet(eth_dst=dest_devs[index].mac,
-                                        eth_src=src_dev.mac,
-                                        vlan_vid=10,
-                                        ip_id=101,
-                                        ip_ttl=64)
-
-                send_packet(
-                    self, send_port.dev_port_index, pkt)
-                verify_packet(
-                    self, pkt, self.recv_dev_port_idx)
-                verify_no_other_packets(self)
         finally:
             pass
 
