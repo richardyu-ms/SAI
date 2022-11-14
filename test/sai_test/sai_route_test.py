@@ -944,6 +944,104 @@ class SviMacFloodingv6Test(T0TestBase):
         self.assertEqual(self.status(), SAI_STATUS_SUCCESS)
         super().tearDown()
 
+class SviMacLearningTest(T0TestBase):
+    """
+    Verify route to svi and learning
+    """
+
+    def setUp(self):
+        """
+        Test the basic setup process.
+        """
+        super().setUp()
+    
+    def sviMacLearningTest(self):
+        """
+        """
+        print("SviMacLearningTest")
+
+        dmac4 = '00:11:22:33:44:55'
+        available_fdb_entry_cnt_past = sai_thrift_get_switch_attribute(
+                self.client,
+                available_fdb_entry=True)['available_fdb_entry']
+
+        pkt = simple_tcp_packet(eth_dst=ROUTER_MAC,
+                                eth_src=dmac4,
+                                ip_dst=self.servers[2][92].ipv4)
+        
+        exp_pkt = simple_tcp_packet(eth_dst=self.servers[2][92].mac,
+                                    eth_src=ROUTER_MAC,
+                                    ip_dst=self.servers[2][92].ipv4)
+        
+        send_packet(self, self.dut.port_obj_list[5].dev_port_index, pkt)
+        verify_packet(self, exp_pkt, self.dut.port_obj_list[10].dev_port_index)
+        
+        sleep(5)  # wait for add mac entry
+        available_fdb_entry_cnt_now = sai_thrift_get_switch_attribute(
+                self.client,
+                available_fdb_entry=True)['available_fdb_entry']
+        self.assertEqual(available_fdb_entry_cnt_now -
+                             available_fdb_entry_cnt_past, -1)
+        
+
+    def runTest(self):
+        try:
+            self.sviMacLearningTest()
+        finally:
+            pass
+    
+    def tearDown(self):
+        super().tearDown()
+
+class SviMacLearningV6Test(T0TestBase):
+    """
+    Verify route to svi and learning
+    """
+
+    def setUp(self):
+        """
+        Test the basic setup process.
+        """
+        super().setUp()
+    
+    def sviMacLearningV6Test(self):
+        """
+        """
+        print("SviMacLearningTest")
+
+        dmac4 = '00:11:22:33:44:55'
+        available_fdb_entry_cnt_past = sai_thrift_get_switch_attribute(
+                self.client,
+                available_fdb_entry=True)['available_fdb_entry']
+
+        pkt_v6 = simple_tcpv6_packet(eth_dst=ROUTER_MAC,
+                                     eth_src=dmac4,
+                                     ipv6_dst=self.servers[2][92].ipv6)
+
+        exp_pkt_v6 = simple_tcpv6_packet(eth_dst=self.servers[2][92].mac,
+                                         eth_src=ROUTER_MAC,
+                                         ipv6_dst=self.servers[2][92].ipv6)
+
+        send_packet(self, self.dut.port_obj_list[5].dev_port_index, pkt)
+        verify_packet(self, exp_pkt, self.dut.port_obj_list[10].dev_port_index)
+        
+        sleep(5)  # wait for add mac entry
+        available_fdb_entry_cnt_now = sai_thrift_get_switch_attribute(
+                self.client,
+                available_fdb_entry=True)['available_fdb_entry']
+        self.assertEqual(available_fdb_entry_cnt_now -
+                             available_fdb_entry_cnt_past, -1)
+        
+
+    def runTest(self):
+        try:
+            self.sviMacLearningV6Test()
+        finally:
+            pass
+    
+    def tearDown(self):
+        super().tearDown()
+
 
 class SviDirectBroadcastTest(T0TestBase):
     """
