@@ -1651,9 +1651,9 @@ class EcmpIngressDisableTestV6(T0TestBase):
         super().tearDown()
 
 
-class EcmpHashFieldSportTestV4(T0TestBase):
+class EcmpLagTwoLayersWithDiffHashOffsetTestV4(T0TestBase):
     """
-    Verify loadbalance on NexthopGroup ipv4 by source port.
+    Verify with in two layers (leaf and spine) if different hash offset in LAG can take effect for the loadbalncing.
     """
 
     def setUp(self):
@@ -1664,16 +1664,6 @@ class EcmpHashFieldSportTestV4(T0TestBase):
                          is_create_route_for_nhopgrp=True,
                          is_create_route_for_lag=False,
                         )
-
-        def setupECMPSeed(self, seed=200):
-        """
-        Sets ECMP seed
-
-        Args:
-            seed (int): seed value
-        """
-        sai_thrift_set_switch_attribute(
-            self.client, ecmp_default_hash_seed=seed)
 
     def setupLagSeed(self, seed=200):
         """
@@ -1745,25 +1735,137 @@ class EcmpHashFieldSportTestV4(T0TestBase):
         print(rcv_count)
         for i in range(0, cnt_ports):
             self.assertTrue((rcv_count[i] >= (max_itrs / cnt_ports * 0.8)), "Not all paths are equally balanced")
+        return rcv_count
 
-    def test_load_balance_on_sportv4(self):
+    def test_ecmp_lag_only_two_layers_with_diff_hash_offset_v4(self):
         """
-        1. Generate different packets by updating src port
-        2. Send these packets on port1
-        3. Check if packets are received on ports of lag1-4 equally
+        Check the basic config, make sure there are four lags
+        Make each lag contains two members(add extra member with available ports)
+        Send 4K packets with different SIP, DIP(192.168.60.0/24), DEST_L4_port,SRC_L4_PORT, PROTO
+        Save the 8 ports receive sequence for all those 4K packet
+        Send those 4K packet again
+        Received 4K packets with the same sequence in step4
+        Change the lag hash offset
+        Send those 4K packet
+        Received 4K packets with the different sequence and those change only happened amoung lag ports within the same lag
         """
-        print("Ecmp l3 load balancing test based on src port")
         setupLagSeed(self)
         time.sleep(3)
-        sendAndVerifyPacket(self)
+        pre_rcv_count = sendAndVerifyPacket(self)
         setupLagSeed(self, 1000)
         time.sleep(3)
-        sendAndVerifyPacket(self)
+        post_rcv_count = sendAndVerifyPacket(self)
         
     def runTest(self):
-        self.test_load_balance_on_sportv4()
+        self.test_ecmp_lag_only_two_layers_with_diff_hash_offset_V4()
 
     def tearDown(self):
         super().tearDown()
 
+class EcmpLagTwoLayersWithDiffHashOffsetTestV6(T0TestBase):
+    """
+    Verify with in two layers (leaf and spine) if different hash offset in LAG can take effect for the loadbalncing.
+    """
+
+    def setUp(self):
+        """
+        Test the basic setup process
+        """
+        T0TestBase.setUp(self,
+                         is_create_route_for_nhopgrp=True,
+                         is_create_route_for_lag=False,
+                        )
+
+    def setupLagSeed(self, seed=200):
+        """
+        Sets Lag seed
+
+        Args:
+            seed (int): seed value
+        """
+        sai_thrift_set_switch_attribute(
+            self.client, lag_default_hash_seed=seed)
+    
+    def sendAndVerifyPacket(self):
+        max_itrs = 400
+        begin_port = 2000
+        recv_dev_port_idxs = self.get_dev_port_indexes(
+            list(filter(lambda item: item != 1, self.dut.nhp_grpv6_list[0].member_port_indexs)))
+        cnt_ports = len(recv_dev_port_idxs)
+        rcv_count = [0 for _ in range(cnt_ports)]
+
+        ip_src = self.servers[0][1].ipv6
+        ip_dst = self.servers[60][1].ipv6
+        for port_index in range(0, max_itrs):
+            src_port = begin_port + port_index
+            pkt = simple_tcpv6_packet(eth_dst=ROUTER_MAC,
+                                      eth_src=self.servers[1][1].mac,
+                                      ipv6_dst=ip_dst,
+                                      ipv6_src=ip_src,
+                                      tcp_sport= src_port,
+                                      ipv6_hlim=64)
+
+            exp_pkt1 = simple_tcpv6_packet(eth_dst=self.t1_list[1][100].mac,
+                                          eth_src=ROUTER_MAC,
+                                          ipv6_dst=ip_dst,
+                                          ipv6_src=ip_src,
+                                          tcp_sport= src_port,
+                                          ipv6_hlim=63)
+            
+            exp_pkt2 = simple_tcpv6_packet(eth_dst=self.t1_list[2][100].mac,
+                                           eth_src=ROUTER_MAC,
+                                           ipv6_dst=ip_dst,
+                                           ipv6_src=ip_src,
+                                           tcp_sport= src_port,
+                                           ipv6_hlim=63)
+
+            exp_pkt3 = simple_tcpv6_packet(eth_dst=self.t1_list[3][100].mac,
+                                           eth_src=ROUTER_MAC,
+                                           ipv6_dst=ip_dst,
+                                           ipv6_src=ip_src,
+                                           tcp_sport= src_port,
+                                           ipv6_hlim=63)
+            
+            exp_pkt4 = simple_tcpv6_packet(eth_dst=self.t1_list[4][100].mac,
+                                           eth_src=ROUTER_MAC,
+                                           ipv6_dst=ip_dst,
+                                           ipv6_src=ip_src,
+                                           tcp_sport= src_port,
+                                           ipv6_hlim=63)
+            self.dataplane.flush()
+            send_packet(self, self.dut.port_obj_list[1].dev_port_index, pkt)
+            rcv_idx = verify_any_packet_any_port(
+                self, [exp_pkt1, exp_pkt2, exp_pkt3, exp_pkt4], recv_dev_port_idxs)
+            rcv_count[rcv_idx] += 1
+
+        print(rcv_count)
+        for i in range(0, cnt_ports):
+            self.assertTrue((rcv_count[i] >= (max_itrs / cnt_ports * 0.8)), "Not all paths are equally balanced")
+
+        return rcv_count
+
+    def test_ecmp_lag_only_two_layers_with_diff_hash_offset_v6(self):
+        """
+        Check the basic config, make sure there are four lags
+        Make each lag contains two members(add extra member with available ports)
+        Send 4K packets with different SIP, DIP, DEST_L4_port,SRC_L4_PORT, PROTO
+        Save the 8 ports receive sequence for all those 4K packet
+        Send those 4K packet again
+        Received 4K packets with the same sequence in step4
+        Change the lag hash offset
+        Send those 4K packet
+        Received 4K packets with the different sequence and those change only happened amoung lag ports within the same lag
+        """
+        setupLagSeed(self)
+        time.sleep(3)
+        pre_rcv_count = sendAndVerifyPacket(self)
+        setupLagSeed(self, 1000)
+        time.sleep(3)
+        post_rcv_count = sendAndVerifyPacket(self)
+        
+    def runTest(self):
+        self.test_ecmp_lag_only_two_layers_with_diff_hash_offset_V4()
+
+    def tearDown(self):
+        super().tearDown()
 
