@@ -139,8 +139,8 @@ HWSKU=${HWSKU:-`$SONIC_CFGGEN -d -v 'DEVICE_METADATA["localhost"]["hwsku"]'`}
 profile_path=/usr/share/sonic/device/$PLATFORM/$HWSKU
 ```
 #### Mounting of sai-warmboot.bin
-Path on the `saiserver`：`/var/warmboot`
-path on the dut host：`/host/warmboot`
+Path on the `saiserver`：`/var/warmboot`  
+Path on the dut host：`/host/warmboot`
 
 #### Prepare for first start
 1.Save the initial `sai.profile` to `sai.profile.bak`，which is for restoring files after warm reboot.
