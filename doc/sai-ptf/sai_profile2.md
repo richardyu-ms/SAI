@@ -139,8 +139,8 @@ HWSKU=${HWSKU:-`$SONIC_CFGGEN -d -v 'DEVICE_METADATA["localhost"]["hwsku"]'`}
 profile_path=/usr/share/sonic/device/$PLATFORM/$HWSKU
 ```
 #### Mounting of sai-warmboot.bin
-Path on the `saiserver`：/var/warmboot
-path on the dut host：/host/warmboot
+Path on the `saiserver`：`/var/warmboot`
+path on the dut host：`/host/warmboot`
 
 #### Prepare for first start
 1.Save the initial `sai.profile` to `sai.profile.bak`，which is for restoring files after warm reboot.
@@ -152,7 +152,7 @@ cp $profile $profile.bak
 cat /etc/sai.d/sai.profile
 SAI_INIT_CONFIG_FILE=/usr/share/sonic/hwsku/td2-s6000-32x40G.config.bcm
 ```
-2.add the WARM_REBOOT_WRITE_FILE and SAI_WARM_BOOT_READ_FILE in the profile。
+2.add the `WARM_REBOOT_WRITE_FILE` and `SAI_WARM_BOOT_READ_FILE` in the profile。
 ```shell
 echo "SAI_WARM_BOOT_WRITE_FILE=/var/warmboot/sai-warmboot.bin" >> $profile
 echo "SAI_WARM_BOOT_READ_FILE=/var/warmboot/sai-warmboot.bin" >> $profile
@@ -184,8 +184,9 @@ SAI_BOOT_TYPE=1
 cp $profile.bak $profile
 -------------------------------
 #Sample profile in brcm s6000
-    wgscat /etc/sai.d/sai.profile
+cat /etc/sai.d/sai.profile
 SAI_INIT_CONFIG_FILE=/usr/share/sonic/hwsku/td2-s6000-32x40G.config.bcm
+SAI_NUM_ECMP_MEMBERS=32
 ```
 ### ptf-mgmt
 
