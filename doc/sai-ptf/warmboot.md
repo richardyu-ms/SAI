@@ -64,7 +64,8 @@ Those tests will be run on the testbed structure as below, the components are:
 Test structure in the chart above, components are:
 * PTF container - run test cases, and use an RPC client to invoke the SAI interfaces on DUT
 * SAI Server container - run inside DUT/switch, which exposes the SAI SDK APIs from the libsai
-* SAI-Qualify - Test controller, which is used to deploy and control the test running, meanwhile, manipulate the DUT on warm reboot.
+* SAI-Qualify - Test controller, which is used to deploy and control the test running
+  * Warmboot-Watcher: 负责和ptf和通信和saiserver的热启动
 
 *For how to start a saiserver container please check the doc at
 [PTF-SAIv2 testing guide](https://github.com/Azure/sonic-mgmt/blob/master/docs/testbed/sai_quality/PTF-SAIv2TestingGuide.md) and 
@@ -77,13 +78,6 @@ For PTF-SAI structure, it uses three different methods for three different steps
 - runTest, run test
 - tearDown, remove the setting and clear the test environment
 
-During a warm reboot, we need to split those three method in PTF-Test into three different stage
-- Before start, three methods
-  - setUp, runTest, tearDown 
-- Starting, three methods
-  - setUp_starting, test_starting, tearDown_starting
-- After Starting, three methods
-  - setUp_post_start, test_post_start, tearDown_post_start
 
 ### DUT settings during warm reboot
 For each stage, there are some different settings for different stages, the details as below:
@@ -152,10 +146,11 @@ there is the sample code
     def tearDown_post_start(self):
         print("tearDown_post_start WarmL2SanityTest")
         print("Skip the teardown after warm boot testing")
- ```
+  ```
 
 ### Code for extending the method in SAI-PTF
 There is the code logic for splitting the runTest method
+
 ```python
 def warm_test(f):
     """
