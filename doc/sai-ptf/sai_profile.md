@@ -2,7 +2,7 @@
 
 | **Title** | **SAI-PTF for Warm reboot** |
 | --- | --- |
-| **Authors** | **Richard Yu** |
+| **Authors** | **Richard Yu, Junyi Xiao** |
 | **Status** | **In review** |
 | **Created** | **22/03/2022** |
 | **Modified** | **22/03/2022** |
