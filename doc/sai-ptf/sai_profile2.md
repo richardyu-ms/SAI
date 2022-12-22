@@ -125,6 +125,7 @@ For more about how `sai.profile` and `sai-warmboot.bin` mount, and how sonic-mgm
 mgmt can remotely control ptf through anisble and execute shell commands. So we create a file `/tmp/warm_reboot` in ptf as shared memory for communication between mgmt and ptf.
 
 
+
 ## sample code & example
 
 ### dut-ptf
