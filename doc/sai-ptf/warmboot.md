@@ -22,7 +22,7 @@
     - [mgmt-ptf](#mgmt-ptf)
   - [sample code](#sample-code)
     - [ptf-dut](#ptf-dut-1)
-    - [dut-mgmt](#dut-mgmt)
+    - [mgmt-dut](#mgmt-dut-1)
       - [Mounting of sai.profile](#mounting-of-saiprofile)
       - [Mounting of sai-warmboot.bin](#mounting-of-sai-warmbootbin)
       - [Prepare for first start](#prepare-for-first-start)
@@ -172,7 +172,7 @@ The [code](https://github.com/ms-junyi/SAI/blob/junyi-warmboot/test/sai_test/sai
   sai_thrift_api_uninitialize(self.client)
    ```
   
-### dut-mgmt
+### mgmt-dut
 The related code is at [sai_warm_profile.sh](https://github.com/sonic-net/sonic-mgmt/blob/master/tests/scripts/sai_qualify/sai_warm_profile.sh)
 #### Mounting of sai.profile
 Path on the `saiserver`: `/etc/sai.d/sai.profile`  
@@ -343,9 +343,14 @@ With that basic VLAN and FDB functionality, we expect in a warm reboot scenario,
 *In this stage, the switch gets started, and we can use warm reboot API to start the switch.*
 
 In [TaggedFrameFilteringTest](https://github.com/opencomputeproject/SAI/blob/master/test/sai_test/sai_vlan_test.py#L195), we will not check test in rebooting because RPC will be used.
-
+1. Pre-warm-reboot
+    - Setup as normal
+    - `warm shut down`
 2. Rebooting
     - wait until `saiserver` container reboots
+3. Post-warm-reboot
+    - APIs start the switch in warm mode
+    - Check test as normal
 
 ### Results
 This is the result of running the azure pipeline, which efficiently completed the test in warm-reboot scenario.
