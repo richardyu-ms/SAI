@@ -30,6 +30,8 @@
       - [Restore after warmboot test](#restore-after-warmboot-test)
     - [ptf-mgmt](#ptf-mgmt)
   - [Example and test result](#example-and-test-result)
+    - [Test case detail](#test-case-detail)
+    - [Results](#results)
 
 
 ## Background for Warm reboot test
@@ -314,3 +316,36 @@ sai code is at [sai_utils.py](https://github.com/ms-junyi/SAI/blob/junyi-warmboo
   t0_switch_config_helper(inst)
 ```
 ## Example and test result
+### Test case detail
+ We reuse the code in the [UntagAccessToAccessTest](https://github.com/opencomputeproject/SAI/blob/master/test/sai_test/sai_vlan_test.py#L31) as warm reboot testsample. In general, in this test case, we 
+- Setup
+  1. create VLANs for each port
+  2. create MACs for ports (mapped with index)
+  3. create route rules by adding mac and port
+  4. create ``Untagged`` packet with ``mac2`` as dest mac.
+  5. then send packet on Port1.
+- Check
+  1. Verify ``Untagged`` packet received port2.
+
+With that basic VLAN and FDB functionality, we expect in a warm reboot scenario, we can get the test case and expectations below
+1. Pre-warm-reboot
+    - Setup as normal
+    - `warm shut down`
+2. Rebooting
+    - Check test as normal continually
+
+*In this stage, like a switch running in starting mode, sai switch is not getting started, we will only verify the packet transit*
+    
+3. Post-warm-reboot
+    - APIs start the switch in warm mode
+    - Check test as normal
+
+*In this stage, the switch gets started, and we can use warm reboot API to start the switch.*
+
+In [TaggedFrameFilteringTest](https://github.com/opencomputeproject/SAI/blob/master/test/sai_test/sai_vlan_test.py#L195), we will not check test in rebooting because RPC will be used.
+
+2. Rebooting
+    - wait until `saiserver` container reboots
+
+### Results
+This is the result of running the azure pipeline, which efficiently completed the test in warm-reboot scenario.
