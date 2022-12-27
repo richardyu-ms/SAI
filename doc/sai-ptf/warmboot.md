@@ -353,4 +353,5 @@ In [TaggedFrameFilteringTest](https://github.com/opencomputeproject/SAI/blob/mas
     - Check test as normal
 
 ### Results
-This is the result of running the azure pipeline, which efficiently completed the test in warm-reboot scenario.
+This is the result of running the azure pipeline, which efficiently completed the vlan test in warm-reboot scenario.
+![result](img/result.png)
