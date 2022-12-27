@@ -112,6 +112,20 @@ def sai_thrift_switch_id_query(client,
     return switch_obj_id
 
 
+def sai_thrift_api_uninitialize(client):
+    """
+    sai_thrift_api_uninitialize() RPC client function
+    implementation
+    Args:
+        client (Client): SAI RPC client
+    Returns:
+        uint: object type
+    """
+    obj_type = client.sai_thrift_api_uninitialize()
+
+    return obj_type
+
+
 def sai_thrift_get_debug_counter_port_stats(client, port_oid, counter_ids):
     """
     Get port statistics for given debug counters
@@ -317,7 +331,7 @@ def delay_wrapper(func, delay=2):
             status: original function return value
         """
         test_params = test_params_get()
-        if test_params['target'] != "hw":
+        if 'target' in test_params.keys() and test_params['target'] != "hw":
             time.sleep(delay)
 
         status = func(*args, **kwargs)
@@ -327,3 +341,56 @@ def delay_wrapper(func, delay=2):
 
 
 sai_thrift_flush_fdb_entries = delay_wrapper(sai_thrift_flush_fdb_entries)
+
+
+def warm_test(is_test_rebooting:bool=False, time_out=60, interval=1):
+    """
+    Method decorator for the method on warm testing.
+    
+    Depends on parameters [test_reboot_mode] and [test_reboot_stage].
+    Runs different method, test_starting, setUp_post_start and runTest
+    
+    args:
+        is_test_rebooting: whether running the test case when saiserver container shut down
+        time_out: check saiserver contianer restart is complete within a 
+                  certain time limit.if time limit if exceeded, raise error
+        interval: frequency of check
+    """
+    def _check_run_case(f):
+        def test_director(inst, *args):
+            if inst.test_reboot_mode == 'warm':
+                print("shutdown the swich in warm mode")
+                sai_thrift_set_switch_attribute(inst.client, restart_warm=True)
+                sai_thrift_set_switch_attribute(inst.client, pre_shutdown=True)
+                sai_thrift_remove_switch(inst.client)
+                # write content to reboot-requested
+                print("write rebooting to file")
+                warm_file = open('/tmp/warm_reboot','w+')
+                warm_file.write('rebooting')
+                warm_file.close()
+                times = 0
+                try:
+                    while 1:
+                        print("reading content in the warm_reboot")
+                        warm_file = open('/tmp/warm_reboot','r')
+                        txt = warm_file.readline()
+                        warm_file.close()                
+                        if 'post_reboot_done' in txt:
+                            print("warm reboot is done, next, we will run the case")
+                            break
+                        if is_test_rebooting:
+                            print("running in the rebooting stage, text is ", txt)
+                            f(inst)
+                        times = times + 1
+                        time.sleep(interval)
+                        print("alreay wait for ",times)
+                        if times > time_out:
+                            raise Exception("time out")
+                except Exception as e:
+                    print(e)
+                
+                inst.createRpcClient()
+                inst.warm_start_switch()
+            return f(inst)
+        return test_director
+    return _check_run_case
