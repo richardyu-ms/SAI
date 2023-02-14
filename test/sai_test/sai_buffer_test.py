@@ -28,7 +28,7 @@ class BufferStatistics(T0TestBase):
         self.pkts = []
 
         pkt = simple_tcp_packet(eth_dst=ROUTER_MAC, eth_src=self.servers[1][0].mac,  ip_dst=self.servers[11][0].ipv4, ip_src=self.servers[1][0].ipv4, ip_id=105, ip_ttl=64)
-        send_packet(self, self.dut.dev_port_list[1], pkt)
+        send_packet(self, self.dut.port_obj_list[1].dev_port_index, pkt)
         for i in range(8):
             self.pkt = simple_udp_packet(eth_dst=ROUTER_MAC, eth_src=self.servers[1][0].mac,  ip_dst=self.servers[11][0].ipv4, ip_src=self.servers[1][0].ipv4, ip_id=105, ip_ttl=64,
                 pktlen=self.pkt_len - 4, ip_dscp=i)  # account for 4B FCS
@@ -70,19 +70,19 @@ class BufferStatistics(T0TestBase):
         
 
         pg_list = sai_thrift_object_list_t(count=100)
-        ipg_list = sai_thrift_get_port_attribute(self.client, port_oid=self.dut.port_list[1], ingress_priority_group_list=pg_list)
+        ipg_list = sai_thrift_get_port_attribute(self.client, port_oid=self.dut.port_obj_list[1].oid, ingress_priority_group_list=pg_list)
         self.ipg_list = ipg_list['ingress_priority_group_list'].idlist
         self.ipgs = []
 
         q_list = sai_thrift_object_list_t(count=100)
-        q_list = sai_thrift_get_port_attribute(self.client, port_oid=self.dut.port_list[18], qos_queue_list=q_list)
+        q_list = sai_thrift_get_port_attribute(self.client, port_oid=self.dut.port_obj_list[18].oid, qos_queue_list=q_list)
         self.q_list = q_list['qos_queue_list'].idlist
         self.qs = []
 
         index=0
         for ipg in self.ipg_list:
             # self.ipg = sai_thrift_create_ingress_priority_group(
-            #     self.client, port=self.dut.port_list[1], index=self.ipg_idx,
+            #     self.client, port=self.dut.port_obj_list[1].oid, index=self.ipg_idx,
             #     buffer_profile=self.buffer_profile)
             
             self.assertGreater(ipg, 0)
@@ -94,7 +94,7 @@ class BufferStatistics(T0TestBase):
 
         for q in self.q_list:
             # self.ipg = sai_thrift_create_ingress_priority_group(
-            #     self.client, port=self.dut.port_list[1], index=self.ipg_idx,
+            #     self.client, port=self.dut.port_obj_list[1].oid, index=self.ipg_idx,
             #     buffer_profile=self.buffer_profile)
             
             self.assertGreater(q, 0)
@@ -149,7 +149,7 @@ class BufferStatistics(T0TestBase):
         self.assertGreater(self.dscp_to_tc_map, 0)
 
         status = sai_thrift_set_port_attribute(
-            self.client, self.dut.port_list[1], qos_dscp_to_tc_map=self.dscp_to_tc_map)
+            self.client, self.dut.port_obj_list[1].dev_port_index, qos_dscp_to_tc_map=self.dscp_to_tc_map)
         self.assertEqual(status, SAI_STATUS_SUCCESS)
 
         print("Create TC to iCoS map")
@@ -162,7 +162,7 @@ class BufferStatistics(T0TestBase):
         self.assertGreater(self.tc_to_ipg_map, 0)
 
         status = sai_thrift_set_port_attribute(
-            self.client, self.dut.port_list[1],
+            self.client, self.dut.port_obj_list[1].oid,
             qos_tc_to_priority_group_map=self.tc_to_ipg_map)
         self.assertEqual(status, SAI_STATUS_SUCCESS)
 
@@ -174,15 +174,15 @@ class BufferStatistics(T0TestBase):
         # the range is -128 <= number <= 127
         print("Set all PGs as lossless")
         status = sai_thrift_set_port_attribute(
-            self.client, self.dut.port_list[1],
+            self.client, self.dut.port_obj_list[1].oid,
             priority_flow_control=127)
         self.assertEqual(status, SAI_STATUS_SUCCESS)
         # status = sai_thrift_set_port_attribute(
-        #     self.client, self.dut.port_list[1],
+        #     self.client, self.dut.port_obj_list[1].oid,
         #     priority_flow_control_tx=-127)
         # self.assertEqual(status, SAI_STATUS_SUCCESS)
         # status = sai_thrift_set_port_attribute(
-        #     self.client, self.dut.port_list[1],
+        #     self.client, self.dut.port_obj_list[1].oid,
         #     priority_flow_control_rx=-127)
         # self.assertEqual(status, SAI_STATUS_SUCCESS)
 
@@ -196,7 +196,7 @@ class BufferStatistics(T0TestBase):
         self.assertGreater(self.dscp_to_tc_map, 0)
 
         status = sai_thrift_set_port_attribute(
-            self.client, self.dut.port_list[18], qos_dscp_to_tc_map=self.dscp_to_tc_map)
+            self.client, self.dut.port_obj_list[18].oid, qos_dscp_to_tc_map=self.dscp_to_tc_map)
         self.assertEqual(status, SAI_STATUS_SUCCESS)
 
         print("Create TC to queue map")
@@ -209,12 +209,12 @@ class BufferStatistics(T0TestBase):
         self.assertGreater(self.tc_to_q_map, 0)
 
         status = sai_thrift_set_port_attribute(
-            self.client, self.dut.port_list[18], qos_tc_to_queue_map=self.tc_to_q_map)
+            self.client, self.dut.port_obj_list[18].oid, qos_tc_to_queue_map=self.tc_to_q_map)
         self.assertEqual(status, SAI_STATUS_SUCCESS)        
         print("OK")
 
         print("Disable port tx")
-        status = sai_thrift_set_port_attribute(self.client, self.dut.port_list[18], pkt_tx_enable=False)
+        status = sai_thrift_set_port_attribute(self.client, self.dut.port_obj_list[18].oid, pkt_tx_enable=False)
         self.assertEqual(status, SAI_STATUS_SUCCESS)
 
         # self.qos_map = sai_thrift_create_qos_map(
@@ -223,7 +223,7 @@ class BufferStatistics(T0TestBase):
         # self.assertGreater(self.qos_map, 0)
 
         # status = sai_thrift_set_port_attribute(
-        #     self.client, self.dut.port_list[1],
+        #     self.client, self.dut.port_obj_list[1].oid,
         #     qos_pfc_priority_to_priority_group_map=self.qos_map)
         # self.assertEqual(status, SAI_STATUS_SUCCESS)
 
@@ -234,7 +234,7 @@ class BufferStatistics(T0TestBase):
         print()
         print("Send {} pkts, pkt size: {} B".format(self.tx_cnt, self.pkt_len))
         for _ in range(self.tx_cnt):
-            send_packet(self, self.dut.dev_port_list[1], self.pkts[2])
+            send_packet(self, self.dut.port_obj_list[1].dev_port_index, self.pkts[2])
         print()
 
     def sendVerify(self, expected_drops, verify_reserved_buffer_size):
