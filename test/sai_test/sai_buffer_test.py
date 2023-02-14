@@ -255,95 +255,106 @@ class BufferStatistics(T0TestBase):
         traffic = Process(target=self.sendTraffic)
 
         traffic.start()
+        pool_counter_ids = [SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES]
+        pg_counter_ids = [SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_CURR_OCCUPANCY_BYTES]
+        while traffic.is_alive():
+            stats = sai_thrift_get_buffer_pool_stats(self.client, self.ingr_pool, counter_ids=pool_counter_ids)
 
-        # while traffic.is_alive():
-        #     stats = sai_thrift_get_buffer_pool_stats(self.client, self.ingr_pool)
-
-        #     if (stats["SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES"]
-        #             > bp_curr_occupancy_bytes):
-        #         bp_curr_occupancy_bytes = stats["SAI_BUFFER_POOL_STAT_"
-        #                                         "CURR_OCCUPANCY_BYTES"]           
+            if (stats["SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES"]
+                    > bp_curr_occupancy_bytes):
+                bp_curr_occupancy_bytes = stats["SAI_BUFFER_POOL_STAT_"
+                                                "CURR_OCCUPANCY_BYTES"]           
                 
-        #     stats = sai_thrift_get_ingress_priority_group_stats(self.client, self.ipgs[1])
+            stats = sai_thrift_get_ingress_priority_group_stats(self.client, self.ipgs[1], counter_ids=pg_counter_ids)
 
-        #     if (stats["SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES"]
-        #             > ipg_curr_occupancy_bytes):
-        #         ipg_curr_occupancy_bytes = stats["SAI_INGRESS_PRIORITY_GROUP_"
-        #                                         "STAT_CURR_OCCUPANCY_BYTES"]
+            if (stats["SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES"]
+                    > ipg_curr_occupancy_bytes):
+                ipg_curr_occupancy_bytes = stats["SAI_INGRESS_PRIORITY_GROUP_"
+                                                "STAT_CURR_OCCUPANCY_BYTES"]
 
-        #     if (stats["SAI_INGRESS_PRIORITY_GROUP_STAT_"
-        #             "SHARED_CURR_OCCUPANCY_BYTES"]
-        #             > ipg_shared_curr_occupancy_bytes):
-        #         ipg_shared_curr_occupancy_bytes = \
-        #             stats["SAI_INGRESS_PRIORITY_GROUP_STAT_"
-        #                 "SHARED_CURR_OCCUPANCY_BYTES"]
+            if (stats["SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_CURR_OCCUPANCY_BYTES"]
+                    > ipg_shared_curr_occupancy_bytes):
+                ipg_shared_curr_occupancy_bytes = \
+                    stats["SAI_INGRESS_PRIORITY_GROUP_STAT_"
+                        "SHARED_CURR_OCCUPANCY_BYTES"]
                 
 
         traffic.join()
 
-        # time.sleep(self.sleep_time)
+        time.sleep(self.sleep_time)
+        counter_ids = [SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES,
+                    SAI_BUFFER_POOL_STAT_WATERMARK_BYTES]
 
-        # stats = sai_thrift_get_buffer_pool_stats(self.client, self.ingr_pool)
+        stats = sai_thrift_get_buffer_pool_stats(self.client, self.ingr_pool, counter_ids=counter_ids)
 
-        # if verify_reserved_buffer_size:
-        #     expected_watermark = self.reserved_buf_size
-        # else:
-        #     expected_watermark = self.pkt_len
+        if verify_reserved_buffer_size:
+            expected_watermark = self.reserved_buf_size
+        else:
+            expected_watermark = self.pkt_len
 
-        # print("SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES",
-        #       stats["SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES"])
-        # print("SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES",
-        #       stats["SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES"])
-        # print("SAI_BUFFER_POOL_STAT_WATERMARK_BYTES",
-        #       stats["SAI_BUFFER_POOL_STAT_WATERMARK_BYTES"])
+        print("SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES",
+              stats["SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES"])
+        print("SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES",
+              stats["SAI_BUFFER_POOL_STAT_CURR_OCCUPANCY_BYTES"])
+        print("SAI_BUFFER_POOL_STAT_WATERMARK_BYTES",
+              stats["SAI_BUFFER_POOL_STAT_WATERMARK_BYTES"])
 
-        #self.assertGreater(bp_curr_occupancy_bytes, 0)
-        # self.assertGreaterEqual(
-        #     stats["SAI_BUFFER_POOL_STAT_WATERMARK_BYTES"], expected_watermark)
+        self.assertGreater(bp_curr_occupancy_bytes, 0)
+        self.assertGreaterEqual(
+            stats["SAI_BUFFER_POOL_STAT_WATERMARK_BYTES"], expected_watermark)
 
         #accross all the pgs
-        # print("Ckeck all the PG stats for the SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS")
+        print("Ckeck all the PG stats for the SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS")
         index = 0
+        counter_ids = [SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_CURR_OCCUPANCY_BYTES,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_CURR_OCCUPANCY_BYTES,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_BYTES,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_DROPPED_PACKETS]
         for ipg in self.ipgs:
-            stats = sai_thrift_get_ingress_priority_group_stats(self.client, ipg)
+            stats = sai_thrift_get_ingress_priority_group_stats(self.client, ipg, counter_ids=counter_ids)
             for key in stats:
                 print("pg index: {} key:{} value:{} ".format(index, key, stats[key]))
             index = index + 1
 
         index = 0
-        for q in self.qs:
-            stats = sai_thrift_get_queue_stats(self.client, q)
-            for key in stats:
-                print("Queue index: {} key:{} value:{} ".format(index, key, stats[key]))
-            index = index + 1
+        # for q in self.qs:
+        #     stats = sai_thrift_get_queue_stats(self.client, q, counter_ids=counter_ids)
+        #     for key in stats:
+        #         print("Queue index: {} key:{} value:{} ".format(index, key, stats[key]))
+        #     index = index + 1
 
         # pdb.set_trace()
 
-        # stats = sai_thrift_get_ingress_priority_group_stats(self.client, self.ipgs[0])
-        # print("SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES ", stats["SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES"])
-        # print("SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_CURR_OCCUPANCY_BYTES ", stats["SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_CURR_OCCUPANCY_BYTES"])
-        # print("SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES",
-        #       stats["SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES"])
-        # print("SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS",
-        #       stats["SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS"])
-        # print("SAI_INGRESS_PRIORITY_GROUP_STAT_BYTES",
-        #       stats["SAI_INGRESS_PRIORITY_GROUP_STAT_BYTES"])
-        # print("SAI_INGRESS_PRIORITY_GROUP_STAT_DROPPED_PACKETS",
-        #       stats["SAI_INGRESS_PRIORITY_GROUP_STAT_DROPPED_PACKETS"])
+        stats = sai_thrift_get_ingress_priority_group_stats(self.client, self.ipgs[0], counter_ids=counter_ids)
+        print("SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES ", stats["SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES"])
+        print("SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_CURR_OCCUPANCY_BYTES ", stats["SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_CURR_OCCUPANCY_BYTES"])
+        print("SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES",
+              stats["SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES"])
+        print("SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS",
+              stats["SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS"])
+        print("SAI_INGRESS_PRIORITY_GROUP_STAT_BYTES",
+              stats["SAI_INGRESS_PRIORITY_GROUP_STAT_BYTES"])
+        print("SAI_INGRESS_PRIORITY_GROUP_STAT_DROPPED_PACKETS",
+              stats["SAI_INGRESS_PRIORITY_GROUP_STAT_DROPPED_PACKETS"])
 
-        # self.assertGreater(ipg_curr_occupancy_bytes, 0)
-        # self.assertGreater(ipg_shared_curr_occupancy_bytes, 0)
-        # self.assertGreaterEqual(
-        #     stats["SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES"],
-        #     expected_watermark)
-        # self.assertEqual(
-        #     stats["SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS"], self.tx_cnt)
-        # self.assertEqual(
-        #     stats["SAI_INGRESS_PRIORITY_GROUP_STAT_BYTES"],
-        #     self.tx_cnt * self.pkt_len)
-        # self.assertEqual(
-        #     stats["SAI_INGRESS_PRIORITY_GROUP_STAT_DROPPED_PACKETS"],
-        #     expected_drops)
+        self.assertGreater(ipg_curr_occupancy_bytes, 0)
+        self.assertGreater(ipg_shared_curr_occupancy_bytes, 0)
+        self.assertGreaterEqual(
+            stats["SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES"],
+            expected_watermark)
+        self.assertEqual(
+            stats["SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS"], self.tx_cnt)
+        self.assertEqual(
+            stats["SAI_INGRESS_PRIORITY_GROUP_STAT_BYTES"],
+            self.tx_cnt * self.pkt_len)
+        self.assertEqual(
+            stats["SAI_INGRESS_PRIORITY_GROUP_STAT_DROPPED_PACKETS"],
+            expected_drops)
 
     def clearVerify(self):
         """
@@ -352,14 +363,19 @@ class BufferStatistics(T0TestBase):
         """
         print()
         print("Clear bufer pool and ingress priority group stats")
+        pool_counter_ids = [SAI_BUFFER_POOL_STAT_WATERMARK_BYTES]
+        pg_counter_ids = [SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_BYTES,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_DROPPED_PACKETS]
 
-        # status = sai_thrift_clear_buffer_pool_stats(
-        #     self.client, self.ingr_pool)
-        # self.assertEqual(status, SAI_STATUS_SUCCESS)
+        status = sai_thrift_clear_buffer_pool_stats(
+            self.client, self.ingr_pool, counter_ids=pool_counter_ids)
+        self.assertEqual(status, SAI_STATUS_SUCCESS)
 
-        # status = sai_thrift_clear_ingress_priority_group_stats(
-        #     self.client, self.ipg)
-        # self.assertEqual(status, SAI_STATUS_SUCCESS)
+        status = sai_thrift_clear_ingress_priority_group_stats(
+            self.client, self.ipgs[0], counter_ids=pg_counter_ids)
+        self.assertEqual(status, SAI_STATUS_SUCCESS)
 
         print("Get stats and verify they are cleared")
 
@@ -384,13 +400,18 @@ class BufferStatistics(T0TestBase):
         print()
 
         # Make sure test starts with cleared counters.
-        # status = sai_thrift_clear_buffer_pool_stats(
-        #     self.client, self.ingr_pool)
-        # self.assertEqual(status, SAI_STATUS_SUCCESS)
+        pool_counter_ids = [SAI_BUFFER_POOL_STAT_WATERMARK_BYTES]
+        pg_counter_ids = [SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_BYTES,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES,
+                    SAI_INGRESS_PRIORITY_GROUP_STAT_DROPPED_PACKETS]
+        status = sai_thrift_clear_buffer_pool_stats(
+            self.client, self.ingr_pool, counter_ids=pool_counter_ids)
+        self.assertEqual(status, SAI_STATUS_SUCCESS)
 
-        # status = sai_thrift_clear_ingress_priority_group_stats(
-        #     self.client, self.ipg)
-        # self.assertEqual(status, SAI_STATUS_SUCCESS)
+        status = sai_thrift_clear_ingress_priority_group_stats(
+            self.client, self.ipgs[0], counter_ids=pg_counter_ids)
+        self.assertEqual(status, SAI_STATUS_SUCCESS)
 
         print("Buffer pool size:", self.buf_size)
         print("Buffer profile reserved_buffer_size:", self.reserved_buf_size)

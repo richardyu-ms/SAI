@@ -498,7 +498,7 @@ class PortConfiger(object):
         '''
 
         # For brcm devices, need to init and setup the ports at once after start the switch.
-        retries = 10
+        retries = 2
         down_port_list = []
         test_port_list:List[Port] = []
 
@@ -527,7 +527,7 @@ class PortConfiger(object):
                     if port_attr['oper_status'] == SAI_PORT_OPER_STATUS_UP:
                         port_up = True
                         break
-                    time.sleep(3)
+                    time.sleep(2)
                     self.log_port_state(port, index)
                     print("port {} , local index {} id {} is not up, status: {}. Retry. Reset Admin State.".format(
                         index, port.port_index, port.oid, port_attr['oper_status']))
