@@ -54,11 +54,19 @@ class BufferStatistics(MinimalPortVlanConfig):
         self.assertGreater(self.buffer_profile, 0)
 
         self.ipg_idx = 7
-        self.ipg = sai_thrift_create_ingress_priority_group(
-            self.client, port=self.port0, index=self.ipg_idx,
-            buffer_profile=self.buffer_profile)
+        sai_list = sai_thrift_u32_list_t(count=20, uint32list=[])
+        attr = sai_thrift_get_port_attribute(self.client, self.port0, ingress_priority_group_list=sai_list)
+        if attr['ingress_priority_group_list'].count > 0:
+            self.ipg = attr['ingress_priority_group_list'].idlist[self.ipg_idx]
+            sai_thrift_set_ingress_priority_group_attribute(self.client, ingress_priority_group_oid=self.ipg, buffer_profile=self.buffer_profile)
+        else:
+            self.ipg = sai_thrift_create_ingress_priority_group(
+                self.client, port=self.port0, index=self.ipg_idx,
+                buffer_profile=self.buffer_profile)
         self.assertGreater(self.ipg, 0)
 
+        import pdb
+        pdb.set_trace()
         prio_to_pg = sai_thrift_qos_map_t(
             key=sai_thrift_qos_map_params_t(prio=0),
             value=sai_thrift_qos_map_params_t(pg=self.ipg_idx))
@@ -277,6 +285,8 @@ class Forwarding(MinimalPortVlanConfig):
             pktlen=self.pkt_len - 4)  # account for 4B FCS
 
         self.ipg_idx = 0
+        import pdb
+        pdb.set_trace()
         self.ipg = sai_thrift_create_ingress_priority_group(
             self.client, port=self.port0, index=self.ipg_idx)
         self.assertGreater(self.ipg, 0)
@@ -481,7 +491,8 @@ class BufferPoolNumber(MinimalPortVlanConfig):
                 threshold_mode=SAI_BUFFER_PROFILE_THRESHOLD_MODE_STATIC)
             self.assertGreater(profile, 0)
             self.ingr_profiles.append(profile)
-
+            import pdb
+            pdb.set_trace()
             ipg = sai_thrift_create_ingress_priority_group(
                 self.client, port=self.port0, index=i, buffer_profile=profile)
             self.assertGreater(ipg, 0)
