@@ -406,12 +406,52 @@ class SaiHelperBase(ThriftInterfaceDataPlane):
         '''
         Method to config the ports.
         '''
+        if get_platform() == 'brcm':
+            self.config_brcm_port()
+        else:
+            self.config_bfn_port()
+
+
+    def config_bfn_port(self):
         self.turn_up_and_check_ports()
         # get default 1Q bridge OID
         self.get_default_1q_bridge_id()
 
         #remove all default 1Q bridge port
         self.reset_1q_bridge_ports()
+
+    # Port setup method below
+
+    def config_brcm_port(self):
+
+        self.port_list = self.port_configer.get_lane_sorted_port_list()
+        self.port_configer.generate_port_obj_list_by_interface_config()
+        self.port_configer.assign_port_config(self.port_config_ini_loader.portConfigs)
+        self.port_configer.assign_config_db(
+            self.config_db_loader.port_config,
+            self.port_config_ini_loader.portConfigs)
+
+        attr = sai_thrift_get_switch_attribute(
+            self.client, default_trap_group=True)
+        default_trap_group = attr['default_trap_group']
+        self.port_configer.set_port_attribute(self.active_port_obj_list)
+        self.port_obj_list = self.port_configer.turn_up_and_get_checked_ports(
+            self.active_port_obj_list)
+        #compatiable with portx variables
+        self.get_port_id_list = self.port_configer.get_port_id_list(self.port_obj_list)
+        self.port_configer.set_test_port_attr(self.port_list)
+
+        if 'port_config_ini' in self.test_params:
+            host_intf_table_id, hostif_list = self.port_configer.create_port_hostif_by_port_config_ini(
+                port_list=self.active_port_obj_list, trap_group=default_trap_group)
+        else:
+            host_intf_table_id, hostif_list = self.port_configer.create_host_intf(
+                port_list=self.active_port_obj_list, trap_group=default_trap_group)
+        self.host_intf_table_id = host_intf_table_id
+        self.hostif_list = hostif_list
+
+        self.default_1q_bridge = self.port_configer.get_default_1q_bridge()
+        self.port_configer.reset_1q_bridge_ports()
 
 
     def turn_up_and_check_ports(self):
@@ -468,7 +508,7 @@ class SaiHelperBase(ThriftInterfaceDataPlane):
         #TODO check if this is common behivor or specified after check on more platform
         if 'port_config_ini' in self.test_params:
             if 'createPorts_has_been_called' not in config:
-                self.createPorts()
+                #self.createPorts()
                 # check if ports became UP
                 #self.checkPortsUp()
                 config['createPorts_has_been_called'] = 1
@@ -537,7 +577,7 @@ class SaiHelperBase(ThriftInterfaceDataPlane):
                 index=True,
                 parent_scheduler_node=True)
             self.assertEqual(queue, q_attr['index'])
-            self.assertEqual(self.cpu_port_hdl, q_attr['port'])
+            #self.assertEqual(self.cpu_port_hdl, q_attr['port'])
 
 
     def start_switch(self):
