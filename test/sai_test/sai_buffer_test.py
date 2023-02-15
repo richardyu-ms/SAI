@@ -8,6 +8,8 @@ from ptf.testutils import *
 from ptf.thriftutils import *
 from sai_utils import *
 import pdb
+from ptf import mask, testutils
+from ptf.packet import IP
 
 
 class BufferStatistics(T0TestBase):
@@ -18,7 +20,7 @@ class BufferStatistics(T0TestBase):
     """
 
     def setUp(self):
-        super().setUp()
+        super().setUp(is_create_fdb=False)
 
         self.tx_cnt = 10000
         self.pkt_len = 700
@@ -26,9 +28,22 @@ class BufferStatistics(T0TestBase):
         self.buf_size = 32689152
         self.sleep_time = 2
         self.pkts = []
-
         pkt = simple_tcp_packet(eth_dst=ROUTER_MAC, eth_src=self.servers[1][0].mac,  ip_dst=self.servers[11][0].ipv4, ip_src=self.servers[1][0].ipv4, ip_id=105, ip_ttl=64)
+        exp_pkt = simple_tcp_packet(eth_dst=self.t1_list[1][100].mac, eth_src=ROUTER_MAC,  ip_dst=self.servers[11][0].ipv4, ip_src=self.servers[1][0].ipv4, ip_id=105, ip_ttl=64)
+        self.exp_pkt = mask.Mask(exp_pkt)
+        self.exp_pkt.set_do_not_care_scapy(IP, "ihl")
+        self.exp_pkt.set_do_not_care_scapy(IP, "tos")
+        self.exp_pkt.set_do_not_care_scapy(IP, "len")
+        self.exp_pkt.set_do_not_care_scapy(IP, "flags")
+        self.exp_pkt.set_do_not_care_scapy(IP, "frag")
+        self.exp_pkt.set_do_not_care_scapy(IP, "ttl")
+        self.exp_pkt.set_do_not_care_scapy(IP, "proto")
+        self.exp_pkt.set_do_not_care_scapy(IP, "chksum")
+
+        self.dataplane.flush()
         send_packet(self, self.dut.port_obj_list[1].dev_port_index, pkt)
+        verify_packet(self, pkt=self.exp_pkt, port_id=self.dut.port_obj_list[17].dev_port_index)
+
         for i in range(8):
             self.pkt = simple_udp_packet(eth_dst=ROUTER_MAC, eth_src=self.servers[1][0].mac,  ip_dst=self.servers[11][0].ipv4, ip_src=self.servers[1][0].ipv4, ip_id=105, ip_ttl=64,
                 pktlen=self.pkt_len - 4, ip_dscp=i)  # account for 4B FCS
@@ -75,7 +90,7 @@ class BufferStatistics(T0TestBase):
         self.ipgs = []
 
         q_list = sai_thrift_object_list_t(count=100)
-        q_list = sai_thrift_get_port_attribute(self.client, port_oid=self.dut.port_obj_list[18].oid, qos_queue_list=q_list)
+        q_list = sai_thrift_get_port_attribute(self.client, port_oid=self.dut.port_obj_list[17].oid, qos_queue_list=q_list)
         self.q_list = q_list['qos_queue_list'].idlist
         self.qs = []
 
@@ -149,7 +164,7 @@ class BufferStatistics(T0TestBase):
         self.assertGreater(self.dscp_to_tc_map, 0)
 
         status = sai_thrift_set_port_attribute(
-            self.client, self.dut.port_obj_list[1].dev_port_index, qos_dscp_to_tc_map=self.dscp_to_tc_map)
+            self.client, self.dut.port_obj_list[1].oid, qos_dscp_to_tc_map=self.dscp_to_tc_map)
         self.assertEqual(status, SAI_STATUS_SUCCESS)
 
         print("Create TC to iCoS map")
@@ -196,7 +211,7 @@ class BufferStatistics(T0TestBase):
         self.assertGreater(self.dscp_to_tc_map, 0)
 
         status = sai_thrift_set_port_attribute(
-            self.client, self.dut.port_obj_list[18].oid, qos_dscp_to_tc_map=self.dscp_to_tc_map)
+            self.client, self.dut.port_obj_list[17].oid, qos_dscp_to_tc_map=self.dscp_to_tc_map)
         self.assertEqual(status, SAI_STATUS_SUCCESS)
 
         print("Create TC to queue map")
@@ -209,13 +224,23 @@ class BufferStatistics(T0TestBase):
         self.assertGreater(self.tc_to_q_map, 0)
 
         status = sai_thrift_set_port_attribute(
-            self.client, self.dut.port_obj_list[18].oid, qos_tc_to_queue_map=self.tc_to_q_map)
+            self.client, self.dut.port_obj_list[17].oid, qos_tc_to_queue_map=self.tc_to_q_map)
         self.assertEqual(status, SAI_STATUS_SUCCESS)        
         print("OK")
 
         print("Disable port tx")
+        status = sai_thrift_set_port_attribute(self.client, self.dut.port_obj_list[17].oid, pkt_tx_enable=False)
+        self.assertEqual(status, SAI_STATUS_SUCCESS)
         status = sai_thrift_set_port_attribute(self.client, self.dut.port_obj_list[18].oid, pkt_tx_enable=False)
         self.assertEqual(status, SAI_STATUS_SUCCESS)
+
+        import pdb
+        pdb.set_trace()
+
+        self.dataplane.flush()
+        send_packet(self, self.dut.port_obj_list[1].dev_port_index, pkt)
+        result = Ether(dp_poll(self, timeout=1).packet)
+        verify_no_packet(self, pkt=self.exp_pkt, port_id=self.dut.port_obj_list[17].dev_port_index)
 
         # self.qos_map = sai_thrift_create_qos_map(
         #     self.client, type=SAI_QOS_MAP_TYPE_PFC_PRIORITY_TO_PRIORITY_GROUP,
