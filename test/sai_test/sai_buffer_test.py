@@ -229,17 +229,15 @@ class BufferStatistics(T0TestBase):
         print("OK")
 
         print("Disable port tx")
-        status = sai_thrift_set_port_attribute(self.client, self.dut.port_obj_list[17].oid, pkt_tx_enable=False)
+        self.dataplane.flush()
+        send_packet(self, self.dut.port_obj_list[1].dev_port_index, self.pkts[2])
+        result = dp_poll(self, timeout=1)
+        status = sai_thrift_set_port_attribute(self.client, self.dut.port_obj_list[result.port].oid, pkt_tx_enable=False)
         self.assertEqual(status, SAI_STATUS_SUCCESS)
-        status = sai_thrift_set_port_attribute(self.client, self.dut.port_obj_list[18].oid, pkt_tx_enable=False)
-        self.assertEqual(status, SAI_STATUS_SUCCESS)
-
-        import pdb
-        pdb.set_trace()
 
         self.dataplane.flush()
-        send_packet(self, self.dut.port_obj_list[1].dev_port_index, pkt)
-        result = Ether(dp_poll(self, timeout=1).packet)
+        send_packet(self, self.dut.port_obj_list[1].dev_port_index, self.pkts[2])
+        #result = Ether(dp_poll(self, timeout=1).packet)
         verify_no_packet(self, pkt=self.exp_pkt, port_id=self.dut.port_obj_list[17].dev_port_index)
 
         # self.qos_map = sai_thrift_create_qos_map(
