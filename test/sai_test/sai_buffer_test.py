@@ -287,6 +287,8 @@ class BufferStatistics(T0TestBase):
         interval_bp_counter = {}
         internal_pg_counter = {}
 
+        query_counter(self, sai_thrift_get_buffer_pool_stats, self.ingr_pool)
+
         while traffic.is_alive():
             for id in pool_counter_ids:
                 counter = sai_get_buffer_pool_stats_counter_ids_dict[id]
