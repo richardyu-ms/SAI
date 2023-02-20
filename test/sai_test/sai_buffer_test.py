@@ -22,19 +22,29 @@ class BufferStatistics(T0TestBase):
     def setUp(self):
         super().setUp(is_create_fdb=False)
 
-        self.tx_cnt = 10000
+        self.tx_cnt = 30000
         self.pkt_len = 700
         # this value will impact SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES
         # and SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES = reserved_buf_size X 2
         self.reserved_buf_size = 5120
-        self.xoff_size = 1280000
-        self.buf_size = 25600000
+        self.xoff_size = 128000
+        self.buf_size = 2560000
 
-        self.xon_th = 1024
+        self.xon_th = 5120
         # SAI_INGRESS_PRIORITY_GROUP_STAT_XOFF_ROOM_CURR_OCCUPANCY_BYTES
-        self.xoff_th = 2048
-        self.xon_offset_th = 4096
+        self.xoff_th = 5120
+        self.xon_offset_th = 5120
         self.sleep_time = 2
+
+        # Ckeck all the ingress_priority_group_stats
+        # pg index: 2 key: SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS value: 30000 
+        # pg index: 2 key: SAI_INGRESS_PRIORITY_GROUP_STAT_BYTES value: 21000000 
+        # pg index: 2 key: SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES value: 5120 
+        # pg index: 2 key: SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES value: 10240 
+        # pg index: 2 key: SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_CURR_OCCUPANCY_BYTES value: 1147392 
+        # pg index: 2 key: SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_WATERMARK_BYTES value: 1147392 
+        # pg index: 2 key: SAI_INGRESS_PRIORITY_GROUP_STAT_XOFF_ROOM_CURR_OCCUPANCY_BYTES value: 4864 
+        # pg index: 2 key: SAI_INGRESS_PRIORITY_GROUP_STAT_XOFF_ROOM_WATERMARK_BYTES value: 5120 
         self.pkts = []
         pkt = simple_tcp_packet(eth_dst=ROUTER_MAC, eth_src=self.servers[1][0].mac,  ip_dst=self.servers[11][0].ipv4, ip_src=self.servers[1][0].ipv4, ip_id=105, ip_ttl=64)
         exp_pkt = simple_tcp_packet(eth_dst=self.t1_list[1][100].mac, eth_src=ROUTER_MAC,  ip_dst=self.servers[11][0].ipv4, ip_src=self.servers[1][0].ipv4, ip_id=105, ip_ttl=64)
@@ -75,13 +85,13 @@ class BufferStatistics(T0TestBase):
             xoff_th=self.xoff_th,
             reserved_buffer_size=self.reserved_buf_size,
             threshold_mode=SAI_BUFFER_PROFILE_THRESHOLD_MODE_DYNAMIC,
-            shared_dynamic_th=-3)
+            shared_dynamic_th=0)
         #|c|SAI_OBJECT_TYPE_BUFFER_PROFILE:oid:0x190000000009f4|SAI_BUFFER_PROFILE_ATTR_THRESHOLD_MODE=SAI_BUFFER_PROFILE_THRESHOLD_MODE_DYNAMIC|SAI_BUFFER_PROFILE_ATTR_SHARED_DYNAMIC_TH=-1|SAI_BUFFER_PROFILE_ATTR_POOL_ID=oid:0x180000000009f1|SAI_BUFFER_PROFILE_ATTR_RESERVED_BUFFER_SIZE=1792
         self.ebuffer_profile = sai_thrift_create_buffer_profile(
             self.client, pool_id=self.egr_pool,
             reserved_buffer_size=self.reserved_buf_size,
             threshold_mode=SAI_BUFFER_PROFILE_THRESHOLD_MODE_DYNAMIC,
-            shared_dynamic_th=-1)
+            shared_dynamic_th=1)
         self.assertGreater(self.buffer_profile, 0)
 
         sw_attrs = sai_thrift_get_switch_attribute(
