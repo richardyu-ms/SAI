@@ -25,10 +25,15 @@ class BufferStatistics(T0TestBase):
         self.tx_cnt = 10000
         self.pkt_len = 700
         # this value will impact SAI_INGRESS_PRIORITY_GROUP_STAT_CURR_OCCUPANCY_BYTES
-        # and SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES
+        # and SAI_INGRESS_PRIORITY_GROUP_STAT_WATERMARK_BYTES = reserved_buf_size X 2
         self.reserved_buf_size = 5120
+        self.xoff_size = 1280000
+        self.buf_size = 25600000
 
-        self.buf_size = 32689152
+        self.xon_th = 1024
+        # SAI_INGRESS_PRIORITY_GROUP_STAT_XOFF_ROOM_CURR_OCCUPANCY_BYTES
+        self.xoff_th = 2048
+        self.xon_offset_th = 4096
         self.sleep_time = 2
         self.pkts = []
         pkt = simple_tcp_packet(eth_dst=ROUTER_MAC, eth_src=self.servers[1][0].mac,  ip_dst=self.servers[11][0].ipv4, ip_src=self.servers[1][0].ipv4, ip_id=105, ip_ttl=64)
@@ -55,26 +60,26 @@ class BufferStatistics(T0TestBase):
 
 
         self.ingr_pool = sai_thrift_create_buffer_pool(
-            self.client, type=SAI_BUFFER_POOL_TYPE_INGRESS, size=self.buf_size, threshold_mode=SAI_BUFFER_POOL_THRESHOLD_MODE_DYNAMIC, xoff_size=2058240)
+            self.client, type=SAI_BUFFER_POOL_TYPE_INGRESS, size=self.buf_size, threshold_mode=SAI_BUFFER_POOL_THRESHOLD_MODE_DYNAMIC, xoff_size=self.xoff_size)
         self.assertGreater(self.ingr_pool, 0)
         #|c|SAI_OBJECT_TYPE_BUFFER_POOL:oid:0x180000000009f1|SAI_BUFFER_POOL_ATTR_THRESHOLD_MODE=SAI_BUFFER_POOL_THRESHOLD_MODE_DYNAMIC|SAI_BUFFER_POOL_ATTR_SIZE=24192256|SAI_BUFFER_POOL_ATTR_TYPE=SAI_BUFFER_POOL_TYPE_EGRESS
         self.egr_pool = sai_thrift_create_buffer_pool(
-            self.client, type=SAI_BUFFER_POOL_TYPE_EGRESS, size=24192256, threshold_mode=SAI_BUFFER_POOL_THRESHOLD_MODE_DYNAMIC, xoff_size=2058240)
+            self.client, type=SAI_BUFFER_POOL_TYPE_EGRESS, size=self.buf_size, threshold_mode=SAI_BUFFER_POOL_THRESHOLD_MODE_DYNAMIC, xoff_size=self.xoff_size)
         self.assertGreater(self.ingr_pool, 0)
 
         #|c|SAI_OBJECT_TYPE_BUFFER_PROFILE:oid:0x190000000009f6|SAI_BUFFER_PROFILE_ATTR_POOL_ID=oid:0x180000000009f2|SAI_BUFFER_PROFILE_ATTR_XON_TH=4608|SAI_BUFFER_PROFILE_ATTR_XON_OFFSET_TH=4608|SAI_BUFFER_PROFILE_ATTR_XOFF_TH=60416|SAI_BUFFER_PROFILE_ATTR_RESERVED_BUFFER_SIZE=4608|SAI_BUFFER_PROFILE_ATTR_THRESHOLD_MODE=SAI_BUFFER_PROFILE_THRESHOLD_MODE_DYNAMIC|SAI_BUFFER_PROFILE_ATTR_SHARED_DYNAMIC_TH=-3
         self.buffer_profile = sai_thrift_create_buffer_profile(
             self.client, pool_id=self.ingr_pool,
-            xon_th=1608,
-            xon_offset_th=2608,
-            xoff_th=60416,
+            xon_th=self.xon_th,
+            xon_offset_th=self.xon_offset_th,
+            xoff_th=self.xoff_th,
             reserved_buffer_size=self.reserved_buf_size,
             threshold_mode=SAI_BUFFER_PROFILE_THRESHOLD_MODE_DYNAMIC,
             shared_dynamic_th=-3)
         #|c|SAI_OBJECT_TYPE_BUFFER_PROFILE:oid:0x190000000009f4|SAI_BUFFER_PROFILE_ATTR_THRESHOLD_MODE=SAI_BUFFER_PROFILE_THRESHOLD_MODE_DYNAMIC|SAI_BUFFER_PROFILE_ATTR_SHARED_DYNAMIC_TH=-1|SAI_BUFFER_PROFILE_ATTR_POOL_ID=oid:0x180000000009f1|SAI_BUFFER_PROFILE_ATTR_RESERVED_BUFFER_SIZE=1792
         self.ebuffer_profile = sai_thrift_create_buffer_profile(
             self.client, pool_id=self.egr_pool,
-            reserved_buffer_size=1792,
+            reserved_buffer_size=self.reserved_buf_size,
             threshold_mode=SAI_BUFFER_PROFILE_THRESHOLD_MODE_DYNAMIC,
             shared_dynamic_th=-1)
         self.assertGreater(self.buffer_profile, 0)
@@ -279,7 +284,7 @@ class BufferStatistics(T0TestBase):
         internal_pg_counter = {}
 
         
-
+        print("checking stat during sending packet")
         while traffic.is_alive():
             stats = query_counter(self, sai_thrift_get_buffer_pool_stats, self.ingr_pool)
             for counter  in sai_get_buffer_pool_stats_counter_ids_dict.values():
@@ -301,8 +306,10 @@ class BufferStatistics(T0TestBase):
         traffic.join()
 
         time.sleep(self.sleep_time)
+        print("Send packet finished.")
         bp_counter = {}
 
+        print("Ckeck all the buffer_pool_stats")
         stats = query_counter(self, sai_thrift_get_buffer_pool_stats, self.ingr_pool)
         for counter in sai_get_buffer_pool_stats_counter_ids_dict.values():
             if not counter in bp_counter:
@@ -321,7 +328,7 @@ class BufferStatistics(T0TestBase):
             bp_counter["SAI_BUFFER_POOL_STAT_WATERMARK_BYTES"], expected_watermark)
 
         #accross all the pgs
-        print("Ckeck all the PG stats for the SAI_INGRESS_PRIORITY_GROUP_STAT_PACKETS")
+        print("Ckeck all the port_stats")
         index = 0
         port_counter = {}
         port_index = 1
@@ -335,6 +342,7 @@ class BufferStatistics(T0TestBase):
 
         pg_counter = {}
         
+        print("Ckeck all the ingress_priority_group_stats")
         for ipg in self.ipgs:
             stats = query_counter(self, sai_thrift_get_ingress_priority_group_stats, ipg)
             for counter in sai_get_ingress_priority_group_stats_counter_ids_dict.values():
@@ -381,6 +389,7 @@ class BufferStatistics(T0TestBase):
             stats = clear_counter(self, sai_thrift_clear_ingress_priority_group_stats, ipg)
 
         print("Get stats and verify they are cleared")
+        print("Get buffer_pool_stats after cleared")
         bp_counter = {}
         stats = query_counter(self, sai_thrift_get_buffer_pool_stats, self.ingr_pool)
         for counter in sai_get_buffer_pool_stats_counter_ids_dict.values():
@@ -390,6 +399,7 @@ class BufferStatistics(T0TestBase):
                 bp_counter[counter] = stats[counter]
                 print(counter, bp_counter[counter])
 
+        print("Get ingress_priority_group_stats after cleared")
         pg_counter = {}
         index = 0
         for ipg in self.ipgs:
