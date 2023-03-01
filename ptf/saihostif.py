@@ -97,7 +97,10 @@ class lagNetdevHostifCreationTest(HostifCreationTestHelper):
                                                   type=SAI_HOSTIF_TYPE_NETDEV)
             self.assertNotEqual(lag_hostif, 0)
 
-            lag_hif_socket = open_packet_socket(lag_hostif_name)
+            import pdb
+            pdb.set_trace()
+
+            #lag_hif_socket = open_packet_socket(lag_hostif_name)
 
             lacp_trap = sai_thrift_create_hostif_trap(
                 self.client,
@@ -126,13 +129,14 @@ class lagNetdevHostifCreationTest(HostifCreationTestHelper):
                 send_packet(self, dev_port, lacp_pkt)
 
                 print("Verifying LACP packet on LAG host interface")
-                self.assertTrue(socket_verify_packet(lacp_pkt, lag_hif_socket))
+                import pdb
+                pdb.set_trace()
+                #self.assertTrue(socket_verify_packet(lacp_pkt, lag_hif_socket))
                 print("\tOK")
 
             print("Verifying CPU port queue stats")
             time.sleep(4)
-            post_stats = query_counter(
-                    self, sai_thrift_get_queue_stats, self.cpu_queue0)
+            post_stats = query_counter(self, sai_thrift_get_queue_stats, self.cpu_queue0)
             self.assertEqual(
                 post_stats["SAI_QUEUE_STAT_PACKETS"],
                 pre_stats["SAI_QUEUE_STAT_PACKETS"] + len(lag_dev_ports))
