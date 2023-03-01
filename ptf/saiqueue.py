@@ -248,7 +248,7 @@ class bufferQueueTest(QueueConfigDataHelper):
                 buffer_profile_id=buff_prof)
             self.assertEqual(status, SAI_STATUS_SUCCESS)
 
-            clear_counter(self, clear_counter, sai_thrift_clear_queue_stats, queue_id[0])
+            clear_counter(self, sai_thrift_clear_queue_stats, queue_id[0])
             pkt = simple_tcp_packet(eth_dst=ROUTER_MAC,
                                     eth_src="00:00:00:00:00:22",
                                     ip_dst="172.16.1.1",
@@ -266,7 +266,12 @@ class bufferQueueTest(QueueConfigDataHelper):
             send_packet(self, self.dev_port25, pkt)
             verify_packet(self, exp_pkt, self.dev_port26)
             print("\tPacket received on PORT26")
-            stats = query_counter(self, sai_thrift_get_queue_stats, queue_id[0])
+            import pdb
+            pdb.set_trace()
+            print("check the last log after the run the API below.")
+            stats = sai_thrift_get_queue_stats(self.client, queue_id[0], 
+                counter_ids=[SAI_QUEUE_STAT_PACKETS, SAI_QUEUE_STAT_CURR_OCCUPANCY_LEVEL, SAI_QUEUE_STAT_WRED_ECN_MARKED_BYTES])
+            #stats = query_counter(self, sai_thrift_get_queue_stats, queue_id[0])
             cnt = stats["SAI_QUEUE_STAT_PACKETS"]
             self.assertEqual(cnt, 1)
 
