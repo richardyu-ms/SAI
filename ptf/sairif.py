@@ -27,7 +27,7 @@ from ptf.thriftutils import *
 
 from sai_base_test import *
 
-@group("draft")
+TEST_PASSED = False
 class L3InterfaceTestHelper(PlatformSaiHelper):
     """
     This class contains base router interface tests for regular L3 port RIFs
@@ -55,12 +55,7 @@ class L3InterfaceTestHelper(PlatformSaiHelper):
             type=SAI_ROUTER_INTERFACE_TYPE_PORT,
             virtual_router_id=self.default_vrf,
             port_id=self.lag1)
-
-        self.nhop1 = sai_thrift_create_next_hop(
-            self.client,
-            ip=sai_ipaddress('10.10.10.2'),
-            router_interface_id=self.port10_rif,
-            type=SAI_NEXT_HOP_TYPE_IP)
+        
         self.neighbor_entry1 = sai_thrift_neighbor_entry_t(
             rif_id=self.port10_rif, ip_address=sai_ipaddress('10.10.10.2'))
         sai_thrift_create_neighbor_entry(
@@ -69,7 +64,14 @@ class L3InterfaceTestHelper(PlatformSaiHelper):
         self.neighbor_entry3 = sai_thrift_neighbor_entry_t(
             rif_id=self.lag1_rif, ip_address=sai_ipaddress('12.10.10.2'))
         sai_thrift_create_neighbor_entry(
-            self.client, self.neighbor_entry3, dst_mac_address=dmac3)
+            self.client, self.neighbor_entry3, dst_mac_address=dmac3)        
+
+        self.nhop1 = sai_thrift_create_next_hop(
+            self.client,
+            ip=sai_ipaddress('10.10.10.2'),
+            router_interface_id=self.port10_rif,
+            type=SAI_NEXT_HOP_TYPE_IP)
+
         self.nhop3 = sai_thrift_create_next_hop(
             self.client,
             ip=sai_ipaddress('12.10.10.2'),
@@ -114,7 +116,7 @@ class L3InterfaceTestHelper(PlatformSaiHelper):
         sai_thrift_remove_router_interface(self.client, self.lag1_rif)
 
         super(L3InterfaceTestHelper, self).tearDown()
-@group("draft")
+
 class Ipv4FibLagTest(L3InterfaceTestHelper):
     """
     Verifies basic  forwarding on RIF using LAG and with new lag member
@@ -277,7 +279,6 @@ class Ipv4FibLagTest(L3InterfaceTestHelper):
     def tearDown(self):
         super(Ipv4FibLagTest, self).tearDown()
 
-@group("draft")
 class Ipv6FibLagTest(L3InterfaceTestHelper):
     """
     Verifies basic IPv6 forwarding on RIF using LAG, with new lag member
@@ -463,7 +464,6 @@ class Ipv6FibLagTest(L3InterfaceTestHelper):
     def tearDown(self):
         super(Ipv6FibLagTest, self).tearDown()
 
-@group("draft")
 class RifSharedMtuTest(L3InterfaceTestHelper):
     """
     Verifies same MTU value shared between RIF and if MTU check works
@@ -684,6 +684,7 @@ class McastDisableTest(L3InterfaceTestHelper):
 
     def runTest(self):
         print("\nmcastDisableTest()")
+        global TEST_PASSED
 
         dst_mcast_ip = "225.0.0.1"
         dst_mcast_ipv6 = "ff11::1111:1"
@@ -809,18 +810,20 @@ class McastDisableTest(L3InterfaceTestHelper):
             print("\tDropped")
             self.port11_rif_counter_in += 1
             self.port11_rif_counter_in_octects += len(mcast_pkt_v6) + 4
+            TEST_PASSED = True
 
         finally:
-            sai_thrift_remove_ipmc_entry(self.client, ipmc_entry_v6)
-            sai_thrift_remove_ipmc_entry(self.client, ipmc_entry)
-            sai_thrift_remove_ipmc_group_member(
-                self.client, ipmc_group_member3)
-            sai_thrift_remove_ipmc_group_member(
-                self.client, ipmc_group_member2)
-            sai_thrift_remove_ipmc_group_member(
-                self.client, ipmc_group_member1)
-            sai_thrift_remove_rpf_group(self.client, rpf_group)
-            sai_thrift_remove_ipmc_group(self.client, ipmc_group)
+            if TEST_PASSED:
+                sai_thrift_remove_ipmc_entry(self.client, ipmc_entry_v6)
+                sai_thrift_remove_ipmc_entry(self.client, ipmc_entry)
+                sai_thrift_remove_ipmc_group_member(
+                    self.client, ipmc_group_member3)
+                sai_thrift_remove_ipmc_group_member(
+                    self.client, ipmc_group_member2)
+                sai_thrift_remove_ipmc_group_member(
+                    self.client, ipmc_group_member1)
+                sai_thrift_remove_rpf_group(self.client, rpf_group)
+                sai_thrift_remove_ipmc_group(self.client, ipmc_group)
 
     def tearDown(self):
         super(McastDisableTest, self).tearDown()
@@ -1173,13 +1176,13 @@ class Ipv4DisableTest(L3InterfaceSimplifiedTestHelper):
             self.client, self.port1_rif, admin_v4_state=False)
         time.sleep(3)
 
-        initial_stats = sai_thrift_get_port_stats(self.client, self.port1)
+        initial_stats = query_counter(self, sai_thrift_get_port_stats, self.port1)
         if_in_discards_pre = initial_stats['SAI_PORT_STAT_IF_IN_DISCARDS']
 
         print("Sending packet on port %d, discard" % self.dev_port1)
         send_packet(self, self.dev_port1, pkt)
         verify_no_other_packets(self, timeout=3)
-        stats = sai_thrift_get_port_stats(self.client, self.port1)
+        stats = query_counter(self, sai_thrift_get_port_stats, self.port1)
         if_in_discards = stats['SAI_PORT_STAT_IF_IN_DISCARDS']
         self.assertTrue(if_in_discards_pre + 1 == if_in_discards)
         self.port1_rif_counter_in += 1
@@ -1293,13 +1296,13 @@ class Ipv6DisableTest(L3InterfaceSimplifiedTestHelper):
         print("Disable IPv6 on ingress RIF")
         sai_thrift_set_router_interface_attribute(
             self.client, self.port1_rif, admin_v6_state=False)
-        initial_stats = sai_thrift_get_port_stats(self.client, self.port1)
+        initial_stats = query_counter(self, sai_thrift_get_port_stats, self.port1)
         if_in_discards_pre = initial_stats['SAI_PORT_STAT_IF_IN_DISCARDS']
 
         print("Sending packet on port %d, discard" % self.dev_port1)
         send_packet(self, self.dev_port1, pkt)
         verify_no_other_packets(self, timeout=1)
-        stats = sai_thrift_get_port_stats(self.client, self.port1)
+        stats = query_counter(self, sai_thrift_get_port_stats, self.port1)
         if_in_discards = stats['SAI_PORT_STAT_IF_IN_DISCARDS']
         self.assertTrue(if_in_discards_pre + 1 == if_in_discards)
         self.port1_rif_counter_in += 1
@@ -7455,8 +7458,8 @@ class SviStatsTest(L3SviTestHelper):
             self.client, self.vlan100_rif)
         vlan200_rif_stats = sai_thrift_get_router_interface_stats(
             self.client, self.vlan200_rif)
-        vlan100_stats = sai_thrift_get_vlan_stats(self.client, self.vlan100)
-        vlan200_stats = sai_thrift_get_vlan_stats(self.client, self.vlan200)
+        vlan100_stats = query_counter(self, sai_thrift_get_vlan_stats, self.vlan100)
+        vlan200_stats = query_counter(self, sai_thrift_get_vlan_stats, self.vlan200)
 
         self.assertTrue(self.vlan100_rif_counter_in == vlan100_rif_stats[
             'SAI_ROUTER_INTERFACE_STAT_IN_PACKETS'])
