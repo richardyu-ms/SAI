@@ -557,6 +557,8 @@ class cpuForwardTest(PlatformSaiHelper):
         try:
             print("Sending packet on port %d, drop" % self.dev_port0)
             send_packet(self, self.dev_port0, pkt)
+            import pdb
+            pdb.set_trace()
             verify_no_other_packets(self, timeout=3)
 
             print("Creating hostif trap for IP2ME")
